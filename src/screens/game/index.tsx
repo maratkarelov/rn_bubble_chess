@@ -32,13 +32,11 @@ export const GameScreen = ({navigation}: Props) => {
         const ratio = height * efficientHeight / width;
         if (ratio > 2) {
             boardWidth = width;
-            boardHeight = width * 2;
         } else {
             boardHeight = height * efficientHeight;
             boardWidth = boardHeight / 2;
             if (boardWidth / width < efficientWidth) {
                 boardWidth = width * efficientWidth;
-                boardHeight = boardWidth * 2;
             }
         }
         const cellSize = boardWidth / 6;
