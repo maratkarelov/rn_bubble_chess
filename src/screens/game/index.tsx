@@ -1,6 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
-import {ColorValue, Dimensions, Text, TouchableOpacity, View} from 'react-native';
+import {ColorValue, Dimensions, Platform, Text, TouchableOpacity, View} from 'react-native';
 import Styles from '../game/styles';
 import {baseColor} from '../../theme/appTheme';
 
@@ -27,8 +27,8 @@ export const GameScreen = ({navigation}: Props) => {
 
         const {width, height} = Dimensions.get('window');
         let {boardWidth, boardHeight} = {boardWidth: 0, boardHeight: 0};
-        const efficientHeight = 0.85;
-        const efficientWidth = 0.8;
+        const efficientHeight = Platform.OS === 'ios' ? 0.85 : 0.9;
+        const efficientWidth = Platform.OS === 'ios' ? 0.8 : 0.85;
         const ratio = height * efficientHeight / width;
         if (ratio > 2) {
             boardWidth = width;
