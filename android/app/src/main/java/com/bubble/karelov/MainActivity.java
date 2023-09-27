@@ -1,4 +1,4 @@
-package com.navigationapp;
+package com.bubble.karelov;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

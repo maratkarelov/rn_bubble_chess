@@ -1,0 +1,13 @@
+{
+  "home": {
+    "label": "Home",
+    "new_game": "Нова гра" },
+  "game": {
+    "label": "game"
+  },
+  "profile": {
+    "label": "Profile",
+    "settings": "Settings",
+    "sign_out": "sign out"
+  }
+}

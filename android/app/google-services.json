@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "225653718903",
+    "project_id": "bubbles-6452d",
+    "storage_bucket": "bubbles-6452d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225653718903:android:a2857b9ad6dc9970d16b72",
+        "android_client_info": {
+          "package_name": "com.bubble.karelov"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcFo8OBmGH9GhQlCgFkM7sWbYh91b4x_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
