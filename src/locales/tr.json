@@ -1,7 +1,16 @@
 {
+  "auth": {
+    "email_not_valid": "email is not valid"
+  },
+  "home": {
+    "label": "Home",
+    "new_game": "New game" },
+  "game": {
+    "label": "game"
+  },
   "profile": {
-    "profile": "Profil",
-    "settings": "Settings"
-
+    "label": "Profile",
+    "settings": "Settings",
+    "sign_out": "sign out"
   }
 }

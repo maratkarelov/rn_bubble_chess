@@ -168,16 +168,17 @@ export const GameScreen = ({navigation}: Props) => {
         }
 
         const renderPoint = (isSelected: boolean, color: ColorValue, isEndAddress: boolean, showCounter: boolean) => {
+            const cellSizeWithPadding = (isEndAddress ? cellSize : cellSize / 2) * 0.8;
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
                 <View
                     style={{
-                        borderRadius: isEndAddress ? cellSize : cellSize / 2,
-                        width: isEndAddress ? cellSize : cellSize / 2,
-                        height: isEndAddress ? cellSize : cellSize / 2,
+                        borderRadius: cellSizeWithPadding,
+                        width: cellSizeWithPadding,
+                        height: cellSizeWithPadding,
                         backgroundColor: color,
                         position: 'absolute',
-                        left: cellSize / 2 - (isEndAddress ? cellSize / 2 : cellSize / 4),
-                        top: cellSize / 2 - (isEndAddress ? cellSize / 2 : cellSize / 4),
+                        left: cellSize / 2 - (cellSizeWithPadding / 2),
+                        top: cellSize / 2 - (cellSizeWithPadding / 2),
                     }}
 
                 />
@@ -192,7 +193,7 @@ export const GameScreen = ({navigation}: Props) => {
             const indexEnd = currentRoute?.points.indexOf(endAddress ?? '') ?? -1;
             const addressInCurrentRoute = indexAddr >= 0;
             const isSelectedCell = (currentRoute !== undefined && endAddress !== undefined && addressInCurrentRoute && indexAddr <= indexEnd) || address === startAddress;
-            const pointColor = isSelectedCell ? baseColor.sky : row === 11 ? baseColor.sky_50 : row === 0 ? baseColor.pink : color === baseColor.wood ? baseColor.gray_30 : baseColor.gray_50
+            const pointColor = isSelectedCell ? baseColor.sky : row === 11 ? baseColor.sky_50 : row === 0 && !isAvailableCell ? baseColor.pink : color === baseColor.wood ? baseColor.gray_30 : baseColor.gray_50
             return (<TouchableOpacity
                 style={{
                     backgroundColor: color,

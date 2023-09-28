@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:NavigationApp.xcodeproj">
+      location = "group:/Users/u/RN/work/reactNativeNavigator/ios/BubbleChess.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:Pods/Pods.xcodeproj">

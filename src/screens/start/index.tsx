@@ -26,7 +26,7 @@ export const StartScreen = ({navigation}: Props) => {
     const register = () => {
         setLoading(true);
         auth()
-            .createUserWithEmailAndPassword('jane.doe@example.com', 'SuperSecretPassword!')
+            .createUserWithEmailAndPassword(formik.values.email, formik.values.password)
             .then(() => {
                 setLoading(false);
             })
@@ -45,9 +45,10 @@ export const StartScreen = ({navigation}: Props) => {
 
     const handleAuth = () => {
         setLoading(true);
+        console.log(formik.values.email, formik.values.password)
         Keyboard.dismiss();
         auth()
-            .signInWithEmailAndPassword('jane.doe@example.com', 'SuperSecretPassword!')
+            .signInWithEmailAndPassword(formik.values.email, formik.values.password )
             .then(() => {
                 setLoading(false);
             })
@@ -79,7 +80,7 @@ export const StartScreen = ({navigation}: Props) => {
     auth().onAuthStateChanged((user) => {
             console.log(user)
             if (user != null) {
-                 navigation.navigate('MainScreen');
+                navigation.navigate('MainScreen');
             }
             return true;
         }
@@ -112,15 +113,19 @@ export const StartScreen = ({navigation}: Props) => {
                         style={Styles.email}
                         placeholder={'email'}
                         inputMode="email"
+                        defaultValue={formik.values.email}
                         onChangeText={formik.handleChange('email')}
 
                     />
+                    {formik.errors.email && (<Text>{formik.errors.email}</Text>)}
                     <TextInput
                         style={Styles.input}
                         placeholder={'password'}
                         textContentType="password"
+                        defaultValue={formik.values.password}
+                        onChangeText={formik.handleChange('password')}
                     />
-                    <TouchableOpacity onPress={() => handleAuth()}>
+                    <TouchableOpacity onPress={() => formik.handleSubmit()}>
                         <View style={Styles.login}>
                             <Text style={Styles.addText}>Авторизоваться</Text>
                         </View>

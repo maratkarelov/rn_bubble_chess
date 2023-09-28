@@ -1,7 +1,10 @@
 {
+  "auth": {
+    "email_not_valid": "email is not valid"
+  },
   "home": {
     "label": "Home",
-    "new_game": "Нова гра" },
+    "new_game": "New game" },
   "game": {
     "label": "game"
   },
