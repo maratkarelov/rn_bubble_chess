@@ -9,7 +9,7 @@ export const baseFontStyle = StyleSheet.create({
 });
 
 export const baseColor = {
-  white: '#ffffff',
+  white: 'rgba(255,255,255,1)',
   wood: 'rgba(51,19,7,0.25)',
   black: '#000000',
   blue: '#2547bd',
@@ -20,5 +20,6 @@ export const baseColor = {
   gray_30: 'rgba(0,0,0,0.15)',
   gray_50: 'rgba(0,0,0,0.2)',
   red: '#d90707',
+  orange: '#ff9a0e',
 };
 

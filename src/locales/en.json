@@ -6,7 +6,11 @@
     "label": "Home",
     "new_game": "New game" },
   "game": {
-    "label": "game"
+    "label": "game",
+    "reply": "reply",
+    "go": "go",
+    "game_over_win": "Game over\nYou Win",
+    "game_over_lose": "Game over\nYou Lose"
   },
   "profile": {
     "label": "Profile",

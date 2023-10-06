@@ -3,6 +3,10 @@ import React, {useEffect, useState} from 'react';
 import {ColorValue, Dimensions, Platform, Text, TouchableOpacity, View} from 'react-native';
 import Styles from '../game/styles';
 import {baseColor} from '../../theme/appTheme';
+import {IconFire, Swordman, Tower} from '../../svg';
+import CustomButton from '../../components/CustomButton';
+import {myRoutes, playerRoutes, StartCapacity} from '../game/gameCollections';
+import i18n from '../../locales/i18n';
 
 interface Props extends StackScreenProps<any, any> {
 }
@@ -10,21 +14,43 @@ interface Props extends StackScreenProps<any, any> {
 interface Route {
     key: string;
     startAddress: string;
-    points: string[]
+    points: string[];
+}
+
+interface Capacity {
+    myCapacity: boolean;
+    live: boolean;
+    startAddress: string;
+    count: number;
+}
+
+interface Launch {
+    myLaunch: boolean;
+    timer: number;
+    points: string[];
+    currentAddress: string;
+    endAddress: string;
+
 }
 
 export const GameScreen = ({navigation}: Props) => {
+        const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
+        const timer = 50;
+        const moveSteps = 100;
+        const launchCellRatio = 5;
         const [startAddress, setStartAddress] = useState<string | undefined>(undefined);
         const [endAddress, setEndAddress] = useState<string | undefined>(undefined);
         const [currentRoute, setCurrentRoute] = useState<Route | undefined>(undefined);
         const [availableRoutes, setAvailableRoutes] = useState<Route[]>([]);
-        useEffect(() => {
-            navigation.setOptions({
-                headerShown: true,
-                headerBackTitle: '',
-            });
-        }, [navigation]);
+        const [launches, setLaunches] = useState<Launch[]>([]);
+        const startCapacities = [...StartCapacity];
+        const [capacities, setCapacities] = useState<Capacity[]>(startCapacities);
+        const [timeLeft, setTimeLeft] = useState(1000000000000);
+        const [readyForMyLaunch, setReadyForMyLaunch] = useState(false);
+        const [readyForHisLaunch, setReadyForHisLaunch] = useState(true);
+        const [gameResult, setGameResult] = useState<boolean | undefined>(undefined);
 
+        //size
         const {width, height} = Dimensions.get('window');
         let {boardWidth, boardHeight} = {boardWidth: 0, boardHeight: 0};
         const efficientHeight = Platform.OS === 'ios' ? 0.85 : 0.9;
@@ -41,104 +67,181 @@ export const GameScreen = ({navigation}: Props) => {
         }
         const cellSize = boardWidth / 6;
 
-        const routes = [
-            {
-                key: 'a1_f',
-                startAddress: 'a1',
-                points: ['a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'a11', 'a12'],
-            },
-            {
-                key: 'a1_r',
-                startAddress: 'a1',
-                points: ['b2', 'c3', 'd4', 'e5', 'f6', 'e7', 'd8', 'c9', 'b10', 'a11', 'b12'],
-            },
-            {
-                key: 'b1_l',
-                startAddress: 'b1',
-                points: ['a2', 'b3', 'c4', 'd5', 'e6', 'f7', 'e8', 'd9', 'c10', 'b11', 'a12'],
-            },
-            {
-                key: 'b1_f',
-                startAddress: 'b1',
-                points: ['b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10', 'b11', 'b12'],
-            },
-            {
-                key: 'b1_r',
-                startAddress: 'b1',
-                points: ['c2', 'd3', 'e4', 'f5', 'e6', 'd7', 'c8', 'b9', 'a10', 'b11', 'c12'],
-            },
-            {
-                key: 'c1_f',
-                startAddress: 'c1',
-                points: ['c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'c11', 'c12'],
-            },
-            {
-                key: 'c1_l',
-                startAddress: 'c1',
-                points: ['b2', 'a3', 'b4', 'c5', 'd6', 'e7', 'f8', 'e9', 'd10', 'c11', 'b12'],
-            },
-            {
-                key: 'c1_r',
-                startAddress: 'c1',
-                points: ['d2', 'e3', 'f4', 'e5', 'd6', 'c7', 'b8', 'a9', 'b10', 'c11', 'd12'],
-            },
-            {
-                key: 'd1_f',
-                startAddress: 'd1',
-                points: ['d2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'd10', 'd11', 'd12'],
-            },
-            {
-                key: 'd1_l',
-                startAddress: 'd1',
-                points: ['c2', 'b3', 'a4', 'b5', 'c6', 'd7', 'e8', 'f9', 'e10', 'd11', 'c12'],
-            },
-            {
-                key: 'd1_r',
-                startAddress: 'd1',
-                points: ['e2', 'f3', 'e4', 'd5', 'c6', 'b7', 'a8', 'b9', 'c10', 'd11', 'e12'],
-            },
-            {
-                key: 'e1_f',
-                startAddress: 'e1',
-                points: ['e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'e9', 'e10', 'e11', 'e12'],
-            },
-            {
-                key: 'e1_l',
-                startAddress: 'e1',
-                points: ['d2', 'c3', 'b4', 'a5', 'b6', 'c7', 'd8', 'e9', 'f10', 'e11', 'd12'],
-            },
-            {
-                key: 'e1_r',
-                startAddress: 'e1',
-                points: ['f2', 'e3', 'd4', 'c5', 'b6', 'a7', 'b8', 'c9', 'd10', 'e11', 'f12'],
-            },
-            {
-                key: 'f1_f',
-                startAddress: 'f1',
-                points: ['f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12'],
-            },
-            {
-                key: 'f1_l',
-                startAddress: 'f1',
-                points: ['e2', 'd3', 'c4', 'b5', 'a6', 'b7', 'c8', 'd9', 'e10', 'f11', 'e12'],
-            },
-        ];
+        const refillCapacities = () => {
+            const newCapacities = [{startAddress: 'a1', count: 6, live: true, myCapacity: true},
+                {startAddress: 'b1', count: 6, live: true, myCapacity: true},
+                {startAddress: 'c1', count: 6, live: true, myCapacity: true},
+                {startAddress: 'd1', count: 6, live: true, myCapacity: true},
+                {startAddress: 'e1', count: 6, live: true, myCapacity: true},
+                {startAddress: 'f1', count: 6, live: true, myCapacity: true},
+                {startAddress: 'a12', count: 6, live: true, myCapacity: false},
+                {startAddress: 'b12', count: 6, live: true, myCapacity: false},
+                {startAddress: 'c12', count: 6, live: true, myCapacity: false},
+                {startAddress: 'd12', count: 6, live: true, myCapacity: false},
+                {startAddress: 'e12', count: 6, live: true, myCapacity: false},
+                {startAddress: 'f12', count: 6, live: true, myCapacity: false}];
+            setCapacities(newCapacities);
+
+        };
+        useEffect(() => {
+            refillCapacities();
+        }, []);
+        // console.log(timeLeft);
+        useEffect(() => {
+                // exit early when we reach 0
+                if (gameResult !== undefined) {
+                    return;
+                }
+                let capacityUpdated = false;
+                let launchUpdated = false;
+                launches.map((launch) => {
+                    let capacity = capacities.find((item) => item.startAddress === launch.currentAddress);
+                    if (capacity?.live) {
+                        capacityUpdated = true;
+                        capacity.live = false;
+                    }
+                    if (launch.timer >= 1) {
+                        launchUpdated = true;
+                        if (launch.timer === 1) {
+                            if (launch.points.length > 0) {
+                                launch.currentAddress = launch.points[0];
+                                launch.points = launch.points.slice(1);
+                                launch.timer = moveSteps;
+                            } else {
+                                launch.currentAddress = launch.endAddress;
+                                launch.timer = 0;
+                            }
+                            // console.log(launch);
+                        } else {
+                            launch.timer = launch.timer - 1;
+                        }
+                    }
+                });
+                if (capacityUpdated) {
+                    console.log('capacityUpdated');
+                    const value = capacities.find((item) => !item.live);
+                    console.log('setGameOver', value);
+                    setGameResult(!value?.myCapacity);
+                    setCapacities(capacities);
+                }
+                if (launchUpdated) {
+                    setLaunches(launches);
+                }
+
+                // save intervalId to clear the interval when the
+                // component re-renders
+                const intervalId = setInterval(() => {
+                    setTimeLeft(timeLeft - 1);
+                }, timer);
+
+                // clear interval on re-render to avoid memory leaks
+                return () => clearInterval(intervalId);
+                // add timeLeft as a dependency to re-rerun the effect
+                // when we update it
+            }, [capacities, launches, timeLeft]
+        );
+
+
+        useEffect(() => {
+                if (gameResult !== undefined) {
+                    return;
+                }
+                if (capacities.find((item) => !item.live) === undefined) {
+                    const availableCapacities = capacities.filter((item) => item.count > 0 && item.live && !item.myCapacity);
+                    if (availableCapacities.length > 0) {
+                        const max = 5;
+                        const min = 1;
+                        const secondsToPlay = Math.floor(Math.random() * (max - min + 1) + min);
+                        const intervalId = setInterval(() => {
+                            const rCapacityIndex = Math.floor(Math.random() * availableCapacities.length);
+                            const capacity = availableCapacities[rCapacityIndex];
+                            const liveFillRoutes = playerRoutes.filter((item) => item.startAddress === capacity.startAddress);
+                            const rRouteIndex = Math.floor(Math.random() * liveFillRoutes.length);
+                            const route = liveFillRoutes[rRouteIndex];
+                            if (route.points !== undefined) {
+                                const rEndIndex = Math.floor(Math.random() * route.points.length);
+                                const end = route.points[rEndIndex];
+                                launch(route, route.startAddress, end, false);
+                                setReadyForHisLaunch(true);
+                                console.log(new Date());
+                            }
+                        }, secondsToPlay * 1000);
+                        setReadyForHisLaunch(false);
+                        return () => clearInterval(intervalId);
+                    }
+                }
+            }, [capacities, readyForHisLaunch]
+        );
+
+
+        const newGame = () => {
+            setReadyForMyLaunch(false);
+            setGameResult(undefined);
+            setReadyForHisLaunch(true);
+            refillCapacities();
+            setCurrentRoute(undefined);
+            setStartAddress(undefined);
+            setEndAddress(undefined);
+            setLaunches([]);
+            setAvailableRoutes([]);
+        };
+        const handleMyLaunch = (route: Route | undefined, start: string | undefined, end: string | undefined) => {
+            setReadyForMyLaunch(false);
+            launch(route, start, end, true);
+        };
+
+        const launch = (route: Route | undefined, start: string | undefined, end: string | undefined, myLaunch: boolean) => {
+            // console.log(currentRoute, endAddress);
+            if (start !== undefined && end !== undefined && route?.points !== undefined) {
+                const endIndex = route?.points.indexOf(end);
+                if (endIndex !== undefined) {
+                    const currentCapacity = capacities.find((item) => item.startAddress === start);
+                    if (currentCapacity !== undefined) {
+                        currentCapacity.count = currentCapacity.count - 1;
+                    }
+                    setCapacities(capacities);
+                    const newLaunch: Launch = {
+                        myLaunch: myLaunch,
+                        timer: moveSteps,
+                        currentAddress: route?.points[0],
+                        points: route?.points.slice(1, endIndex + 1),
+                        endAddress: end,
+                    };
+                    // console.log(newLaunch)
+                    setLaunches(launches => [...launches, newLaunch]);
+                    if (myLaunch) {
+                        setCurrentRoute(undefined);
+                        setStartAddress(undefined);
+                        setEndAddress(undefined);
+                        setAvailableRoutes([]);
+                    }
+                }
+            }
+        };
+
+        // console.log(capacities)
 
 
         function getItem(selectedAddress: string) {
-            const isStartCell = routes.find((route: Route) => (route.startAddress === selectedAddress)) !== undefined;
+            const isStartCell = myRoutes.find((route) => (route.startAddress === selectedAddress)) !== undefined;
             if (isStartCell) {
                 //click start line point
-                const newAvailableRoutes: Route[] = routes.filter((item) => {
-                    return item.startAddress === selectedAddress;
-                });
-                setStartAddress(selectedAddress);
+                if (selectedAddress === startAddress) {
+                    setStartAddress(undefined);
+                    setAvailableRoutes([]);
+                } else {
+                    const newAvailableRoutes = myRoutes.filter((item) => {
+                        return item.startAddress === selectedAddress;
+                    });
+                    setStartAddress(selectedAddress);
+                    setAvailableRoutes(newAvailableRoutes);
+                }
                 setEndAddress(undefined);
+                setReadyForMyLaunch(false);
                 setCurrentRoute(undefined);
-                setAvailableRoutes(newAvailableRoutes);
             } else {
                 //click destination point
-                const availableRoutesForEnd = availableRoutes.filter((route) => (route.points.find((point) => (point === selectedAddress)) !== undefined))
+                const availableRoutesForEnd = availableRoutes.filter((route) => (route.points.find((point) => (point === selectedAddress)) !== undefined));
                 if (availableRoutesForEnd.length > 0) {
                     if (selectedAddress === endAddress) {
                         //повторное нажатие на том же конечном адресе
@@ -158,8 +261,9 @@ export const GameScreen = ({navigation}: Props) => {
                             }
                         }
                     } else {
-                        //нажали другой конечный адрес какого-либо маршрута
+                        //нажали другой конечный адрес возможного маршрута
                         setEndAddress(selectedAddress);
+                        setReadyForMyLaunch(true);
                         //первый возможный выделим
                         setCurrentRoute(availableRoutesForEnd[0]);
                     }
@@ -167,10 +271,72 @@ export const GameScreen = ({navigation}: Props) => {
             }
         }
 
-        const renderPoint = (isSelected: boolean, color: ColorValue, isEndAddress: boolean, showCounter: boolean) => {
-            const cellSizeWithPadding = (isEndAddress ? cellSize : cellSize / 2) * 0.8;
+        useEffect(() => {
+            navigation.setOptions({
+                headerShown: true,
+                headerBackTitle: '',
+                headerRight: () => ((readyForMyLaunch || gameResult !== undefined) &&
+                    <CustomButton
+                        onPress={() => gameResult !== undefined ? newGame() : handleMyLaunch(currentRoute, startAddress, endAddress)}
+                        title={i18n.t(gameResult !== undefined ? 'game.reply' : 'game.go')}
+                    />
+                ),
+            });
+        }, [readyForMyLaunch, gameResult, currentRoute, endAddress, navigation, startAddress]);
+
+
+        const renderLaunch = (address: string) => {
+            const containsTower = launches.find((item) => (item.currentAddress === address && item.points.length === 0));
+            const movingLaunch = launches.find((item) => (item.currentAddress === address && item.points.length > 0));
+            let topOffset = 0;
+            let leftOffset = 0;
+            if (movingLaunch !== undefined) {
+                const letter = address.substring(0, 1);
+                const nextLetter = movingLaunch?.points[0]?.substring(0, 1);
+                const launchRadius = cellSize / (2 * launchCellRatio);
+                const launchProgress = movingLaunch.timer / moveSteps;
+                topOffset = movingLaunch.myLaunch ? (cellSize * launchProgress - launchRadius) : (cellSize * (1 - launchProgress) - launchRadius);
+                const leftDirectionOffset = cellSize * launchProgress - launchRadius;
+                const rightDirectionOffset = cellSize * (1 - launchProgress) - launchRadius;
+                leftOffset = letter === nextLetter ? (cellSize / 2 - launchRadius) : letter === 'a' && movingLaunch.timer < moveSteps / 2 || letter === 'f' && movingLaunch.timer > moveSteps / 2 ? rightDirectionOffset : (letter === 'a' && movingLaunch.timer > moveSteps / 2 || letter === 'f' && movingLaunch.timer < moveSteps / 2 ? leftDirectionOffset : (address > nextLetter ? leftDirectionOffset : rightDirectionOffset));
+                // leftOffset = letter === nextLetter ? cellSize / 2 : letter === 'a' && movingLaunch.timer < moveSteps / 2 || letter === 'f' && movingLaunch.timer > moveSteps / 2 ? rightDirectionOffset : (letter === 'a' && movingLaunch.timer > moveSteps / 2 || letter === 'f' && movingLaunch.timer < moveSteps / 2 ? leftDirectionOffset : (address > nextLetter ? leftDirectionOffset : rightDirectionOffset));
+                console.log(new Date(), movingLaunch.timer, leftOffset, topOffset);
+            }
+            if (movingLaunch !== undefined || containsTower !== undefined) {
+                // console.log(launch, address)
+                return <View
+                    style={{
+                        width: cellSize,
+                        height: cellSize,
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                    }}>
+                    {containsTower !== undefined && (
+                        <Tower fill={containsTower.myLaunch ? baseColor.sky : baseColor.pink}/>)}
+                    {(movingLaunch) && (<View
+                        style={{
+                            borderRadius: cellSize / launchCellRatio,
+                            width: cellSize / launchCellRatio,
+                            height: cellSize / launchCellRatio,
+                            backgroundColor: movingLaunch.myLaunch ? baseColor.sky : baseColor.pink,
+                            position: 'absolute',
+                            left: leftOffset,
+                            top: topOffset,
+                        }}
+
+                    />)}
+                </View>;
+            }
+        };
+        // console.log(boardWidth - width)
+        // console.log(gameResult)
+// console.log(launches)
+        const renderPoint = (address: string, isStartAddress: boolean, color: ColorValue, showCounter: boolean) => {
+            const cellSizeWithPadding = (isStartAddress ? cellSize : cellSize / 2) * 0.5;
+            const capacity = capacities.find((item) => item.startAddress === address);
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
-                <View
+                {(<View
                     style={{
                         borderRadius: cellSizeWithPadding,
                         width: cellSizeWithPadding,
@@ -181,9 +347,38 @@ export const GameScreen = ({navigation}: Props) => {
                         top: cellSize / 2 - (cellSizeWithPadding / 2),
                     }}
 
-                />
+                />)}
+                {showCounter && !capacity?.live && (<IconFire/>)}
                 {showCounter && (<Text
-                    style={{position: 'absolute', bottom: 0, right: 0, color: baseColor.black, fontSize: 20}}>6</Text>)}
+                    style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        color: baseColor.black,
+                        fontSize: 20,
+                    }}>{capacity?.count}</Text>)}
+            </View>;
+
+        };
+// console.log(launches)
+        const renderAvailableTower = () => {
+            return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+                <Tower fill={baseColor.blue}/>
+            </View>;
+        };
+
+        const renderSwordman = (address: string) => {
+            const capacity = capacities.find((item) => item.startAddress === address);
+            return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+                <Swordman fill={baseColor.blue}/>
+                <Text
+                    style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        color: baseColor.black,
+                        fontSize: 20,
+                    }}>{capacity?.count}</Text>
             </View>;
         };
 
@@ -193,7 +388,7 @@ export const GameScreen = ({navigation}: Props) => {
             const indexEnd = currentRoute?.points.indexOf(endAddress ?? '') ?? -1;
             const addressInCurrentRoute = indexAddr >= 0;
             const isSelectedCell = (currentRoute !== undefined && endAddress !== undefined && addressInCurrentRoute && indexAddr <= indexEnd) || address === startAddress;
-            const pointColor = isSelectedCell ? baseColor.sky : row === 11 ? baseColor.sky_50 : row === 0 && !isAvailableCell ? baseColor.pink : color === baseColor.wood ? baseColor.gray_30 : baseColor.gray_50
+            const pointColor = isSelectedCell ? baseColor.sky : row === 11 ? baseColor.sky_50 : row === 0 && !isAvailableCell ? baseColor.pink : color === baseColor.wood ? baseColor.gray_30 : baseColor.gray_50;
             return (<TouchableOpacity
                 style={{
                     backgroundColor: color,
@@ -204,9 +399,11 @@ export const GameScreen = ({navigation}: Props) => {
                     top: top,
                 }}
                 onPress={() => getItem(address)}>
-                {/*{balloon && renderColoredPoint(address === startAddress ? baseColor.sky : !isOpponent ? balloonColor : baseColor.gray_30)}*/}
-                {(isAvailableCell || row === 0 || row === 11) &&
-                    renderPoint(isSelectedCell, pointColor, address === endAddress, row === 0 || row === 11)}
+                {(row > 0 && row < 11) && renderLaunch(address)}
+                {(row > 0 && row < 11 && address === endAddress && renderAvailableTower())}
+                {(row === 0 && address === endAddress && renderSwordman(address))}
+                {(address !== endAddress && (isAvailableCell || row === 0 || row === 11)) &&
+                    renderPoint(address, address === startAddress, pointColor, row === 0 || row === 11)}
             </TouchableOpacity>);
         };
 
@@ -216,7 +413,7 @@ export const GameScreen = ({navigation}: Props) => {
                 rows.push(
                     boardSquareCell(
                         row,
-                        String.fromCharCode(col + 97) + (12 - row).toString(),
+                        letters[col] + (12 - row).toString(),
                         (col + row) % 2 === 0 ? baseColor.white : baseColor.wood,
                         (width - boardWidth) / 2 + col * boardWidth / 6,
                         row * cellSize
@@ -228,7 +425,11 @@ export const GameScreen = ({navigation}: Props) => {
         return (
             <View style={Styles.container}>
                 {rows}
-
+                {gameResult !== undefined && <Text style={{
+                    fontSize: 60,
+                    textAlign: 'center',
+                    top: boardHeight / 2 - 70,
+                }}>{i18n.t(gameResult ? 'game.game_over_win' : 'game.game_over_lose')}</Text>}
             </View>
         );
 

@@ -7,7 +7,11 @@
     "new_game": "Нова гра"
   },
   "game": {
-    "label": "game"
+    "label": "game",
+    "reply": "reply",
+    "go": "go",
+    "game_over_win": "Game over. Win",
+    "game_over_lose": "Game over. Lose"
   },
   "profile": {
     "label": "Профіль",
