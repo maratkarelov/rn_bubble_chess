@@ -118,9 +118,9 @@ export const GameScreen = ({navigation}: Props) => {
                     }
                 });
                 if (capacityUpdated) {
-                    console.log('capacityUpdated');
+                    // console.log('capacityUpdated');
                     const value = capacities.find((item) => !item.live);
-                    console.log('setGameOver', value);
+                    // console.log('setGameOver', value);
                     setGameResult(!value?.myCapacity);
                     setCapacities(capacities);
                 }
@@ -141,38 +141,38 @@ export const GameScreen = ({navigation}: Props) => {
             }, [capacities, launches, timeLeft]
         );
 
-
         useEffect(() => {
-                if (gameResult !== undefined) {
-                    return;
-                }
                 if (capacities.find((item) => !item.live) === undefined) {
                     const availableCapacities = capacities.filter((item) => item.count > 0 && item.live && !item.myCapacity);
                     if (availableCapacities.length > 0) {
-                        const max = 5;
+                        const max = 15;
                         const min = 1;
                         const secondsToPlay = Math.floor(Math.random() * (max - min + 1) + min);
-                        const intervalId = setInterval(() => {
+                        const timeout = setTimeout(() => {
                             const rCapacityIndex = Math.floor(Math.random() * availableCapacities.length);
+                            // console.log(rCapacityIndex, 'rCapacityIndex');
                             const capacity = availableCapacities[rCapacityIndex];
                             const liveFillRoutes = playerRoutes.filter((item) => item.startAddress === capacity.startAddress);
+                            // console.log(liveFillRoutes)
                             const rRouteIndex = Math.floor(Math.random() * liveFillRoutes.length);
+                            // console.log(rRouteIndex, 'rRouteIndex');
                             const route = liveFillRoutes[rRouteIndex];
                             if (route.points !== undefined) {
                                 const rEndIndex = Math.floor(Math.random() * route.points.length);
+                                // console.log(rEndIndex, 'rEndIndex');
                                 const end = route.points[rEndIndex];
                                 launch(route, route.startAddress, end, false);
                                 setReadyForHisLaunch(true);
-                                console.log(new Date());
+                                console.log('play', new Date());
                             }
                         }, secondsToPlay * 1000);
+                        console.log(secondsToPlay, '==============', timeout)
                         setReadyForHisLaunch(false);
-                        return () => clearInterval(intervalId);
+                        return () => clearTimeout(timeout);
                     }
                 }
-            }, [capacities, readyForHisLaunch]
+            }, [readyForHisLaunch]
         );
-
 
         const newGame = () => {
             setReadyForMyLaunch(false);
@@ -300,7 +300,7 @@ export const GameScreen = ({navigation}: Props) => {
                 const rightDirectionOffset = cellSize * (1 - launchProgress) - launchRadius;
                 leftOffset = letter === nextLetter ? (cellSize / 2 - launchRadius) : letter === 'a' && movingLaunch.timer < moveSteps / 2 || letter === 'f' && movingLaunch.timer > moveSteps / 2 ? rightDirectionOffset : (letter === 'a' && movingLaunch.timer > moveSteps / 2 || letter === 'f' && movingLaunch.timer < moveSteps / 2 ? leftDirectionOffset : (address > nextLetter ? leftDirectionOffset : rightDirectionOffset));
                 // leftOffset = letter === nextLetter ? cellSize / 2 : letter === 'a' && movingLaunch.timer < moveSteps / 2 || letter === 'f' && movingLaunch.timer > moveSteps / 2 ? rightDirectionOffset : (letter === 'a' && movingLaunch.timer > moveSteps / 2 || letter === 'f' && movingLaunch.timer < moveSteps / 2 ? leftDirectionOffset : (address > nextLetter ? leftDirectionOffset : rightDirectionOffset));
-                console.log(new Date(), movingLaunch.timer, leftOffset, topOffset);
+                // console.log(new Date(), movingLaunch.timer, leftOffset, topOffset);
             }
             if (movingLaunch !== undefined || containsTower !== undefined) {
                 // console.log(launch, address)
