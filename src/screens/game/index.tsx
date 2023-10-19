@@ -25,6 +25,7 @@ interface Capacity {
 }
 
 interface Launch {
+    health: number,
     myLaunch: boolean;
     timer: number;
     points: string[];
@@ -33,16 +34,23 @@ interface Launch {
 
 }
 
+interface Explosion {
+    address: string,
+    timer: number
+}
+
 export const GameScreen = ({navigation}: Props) => {
         const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
         const timer = 50;
         const moveSteps = 100;
         const launchCellRatio = 5;
+        const explosionSteps = 5;
         const [startAddress, setStartAddress] = useState<string | undefined>(undefined);
         const [endAddress, setEndAddress] = useState<string | undefined>(undefined);
         const [currentRoute, setCurrentRoute] = useState<Route | undefined>(undefined);
         const [availableRoutes, setAvailableRoutes] = useState<Route[]>([]);
         const [launches, setLaunches] = useState<Launch[]>([]);
+        const [explosions, setExplosions] = useState<Explosion[]>([]);
         const startCapacities = [...StartCapacity];
         const [capacities, setCapacities] = useState<Capacity[]>(startCapacities);
         const [timeLeft, setTimeLeft] = useState(1000000000000);
@@ -50,6 +58,9 @@ export const GameScreen = ({navigation}: Props) => {
         const [readyForHisLaunch, setReadyForHisLaunch] = useState(true);
         const [gameResult, setGameResult] = useState<boolean | undefined>(undefined);
 
+        var Sound = require('react-native-sound');
+        // Enable playback in silence mode
+        Sound.setCategory('Playback');
         //size
         const {width, height} = Dimensions.get('window');
         let {boardWidth, boardHeight} = {boardWidth: 0, boardHeight: 0};
@@ -87,6 +98,64 @@ export const GameScreen = ({navigation}: Props) => {
             refillCapacities();
         }, []);
         // console.log(timeLeft);
+
+        const checkNewExplosion = (address: string) => {
+            const myTower = launches.find((item) => (item.currentAddress === address && item.myLaunch && item.currentAddress === item.endAddress));
+            const myLaunch = launches.find((item) => (item.currentAddress === address && item.myLaunch && item.currentAddress !== item.endAddress));
+            const hisTower = launches.find((item) => (item.currentAddress === address && !item.myLaunch && item.currentAddress === item.endAddress));
+            const hisLaunch = launches.find((item) => (item.currentAddress === address && !item.myLaunch && item.currentAddress !== item.endAddress));
+            if (myTower !== undefined && hisLaunch !== undefined) {
+                if (myTower.health === 2) {
+                    myTower.health = 1;
+                    const newLaunches = launches.filter((l) => l !== hisLaunch);
+                    setLaunches(newLaunches);
+                    playSound('armor');
+                } else {
+                    playSound('blaster');
+                    setLaunches(launches.filter((l) => l !== hisLaunch && l !== myTower));
+                }
+                newExplosion(address);
+            } else if (myLaunch !== undefined && hisTower !== undefined) {
+                if (hisTower.health === 2) {
+                    hisTower.health = 1;
+                    setLaunches(launches.filter((l) => l !== myLaunch));
+                    playSound('armor');
+                } else {
+                    playSound('blaster');
+                    setLaunches(launches.filter((l) => l !== hisTower && l !== myLaunch));
+                }
+                newExplosion(address);
+            } else if (myLaunch !== undefined && hisLaunch !== undefined) {
+                setLaunches(launches.filter((item) => item !== myLaunch && item !== hisLaunch));
+                playSound('blaster');
+                newExplosion(address);
+            } else if (myTower !== undefined && hisTower !== undefined) {
+                if (hisTower.health === 2) {
+                    hisTower.health = 1;
+                    setLaunches(launches.filter((l) => l !== myTower));
+                    playSound('armor');
+                } else if (myTower.health === 2) {
+                    myTower.health = 1;
+                    setLaunches(launches.filter((l) => l !== hisTower));
+                    playSound('armor');
+                } else if (myTower.health === hisTower.health) {
+                    setLaunches(launches.filter((l) => l !== hisTower && l !== myTower));
+                    playSound('blaster');
+                }
+                newExplosion(address);
+            }
+
+        }
+
+        const newExplosion = (address: string) => {
+            const newExplosion: Explosion = {
+                address: address,
+                timer: explosionSteps,
+            };
+            setExplosions(explosions => [...explosions, newExplosion]);
+
+        };
+
         useEffect(() => {
                 // exit early when we reach 0
                 if (gameResult !== undefined) {
@@ -109,22 +178,39 @@ export const GameScreen = ({navigation}: Props) => {
                                 launch.timer = moveSteps;
                             } else {
                                 launch.currentAddress = launch.endAddress;
+                                launch.health = 2;
                                 launch.timer = 0;
                             }
-                            // console.log(launch);
                         } else {
                             launch.timer = launch.timer - 1;
                         }
                     }
                 });
+                let explosionsUpdated = false;
+                explosions.map((item) => {
+                    if (item.timer > 0) {
+                        item.timer = item.timer - 1;
+                        explosionsUpdated = true;
+                    } else {
+                        console.log('active explosions', new Date(), explosions);
+                        setExplosions(explosions.filter((value) => value.timer > 0));
+                    }
+                });
+                if (explosionsUpdated) {
+                    console.log('explosions updated', new Date(), explosions);
+                    setExplosions(explosions);
+                }
                 if (capacityUpdated) {
                     // console.log('capacityUpdated');
                     const value = capacities.find((item) => !item.live);
                     // console.log('setGameOver', value);
                     setGameResult(!value?.myCapacity);
                     setCapacities(capacities);
+                    playSound(value?.myCapacity ? 'lose' : 'win');
+
                 }
                 if (launchUpdated) {
+                    // console.log(launches)
                     setLaunches(launches);
                 }
 
@@ -150,23 +236,17 @@ export const GameScreen = ({navigation}: Props) => {
                         const secondsToPlay = Math.floor(Math.random() * (max - min + 1) + min);
                         const timeout = setTimeout(() => {
                             const rCapacityIndex = Math.floor(Math.random() * availableCapacities.length);
-                            // console.log(rCapacityIndex, 'rCapacityIndex');
                             const capacity = availableCapacities[rCapacityIndex];
                             const liveFillRoutes = playerRoutes.filter((item) => item.startAddress === capacity.startAddress);
-                            // console.log(liveFillRoutes)
                             const rRouteIndex = Math.floor(Math.random() * liveFillRoutes.length);
-                            // console.log(rRouteIndex, 'rRouteIndex');
                             const route = liveFillRoutes[rRouteIndex];
                             if (route.points !== undefined) {
                                 const rEndIndex = Math.floor(Math.random() * route.points.length);
-                                // console.log(rEndIndex, 'rEndIndex');
                                 const end = route.points[rEndIndex];
                                 launch(route, route.startAddress, end, false);
                                 setReadyForHisLaunch(true);
-                                console.log('play', new Date());
                             }
                         }, secondsToPlay * 1000);
-                        console.log(secondsToPlay, '==============', timeout)
                         setReadyForHisLaunch(false);
                         return () => clearTimeout(timeout);
                     }
@@ -185,13 +265,13 @@ export const GameScreen = ({navigation}: Props) => {
             setLaunches([]);
             setAvailableRoutes([]);
         };
+
         const handleMyLaunch = (route: Route | undefined, start: string | undefined, end: string | undefined) => {
             setReadyForMyLaunch(false);
             launch(route, start, end, true);
         };
 
         const launch = (route: Route | undefined, start: string | undefined, end: string | undefined, myLaunch: boolean) => {
-            // console.log(currentRoute, endAddress);
             if (start !== undefined && end !== undefined && route?.points !== undefined) {
                 const endIndex = route?.points.indexOf(end);
                 if (endIndex !== undefined) {
@@ -201,6 +281,7 @@ export const GameScreen = ({navigation}: Props) => {
                     }
                     setCapacities(capacities);
                     const newLaunch: Launch = {
+                        health: 1,
                         myLaunch: myLaunch,
                         timer: moveSteps,
                         currentAddress: route?.points[0],
@@ -218,9 +299,6 @@ export const GameScreen = ({navigation}: Props) => {
                 }
             }
         };
-
-        // console.log(capacities)
-
 
         function getItem(selectedAddress: string) {
             const isStartCell = myRoutes.find((route) => (route.startAddress === selectedAddress)) !== undefined;
@@ -285,24 +363,34 @@ export const GameScreen = ({navigation}: Props) => {
         }, [readyForMyLaunch, gameResult, currentRoute, endAddress, navigation, startAddress]);
 
 
-        const renderLaunch = (address: string) => {
+        const renderLaunch = (address: string, movingLaunch: Launch) => {
+            const letter = address.substring(0, 1);
+            const nextLetter = movingLaunch?.points[0]?.substring(0, 1);
+            const launchRadius = cellSize / (2 * launchCellRatio);
+            const launchProgress = movingLaunch.timer / moveSteps;
+            let topOffset = movingLaunch.myLaunch ? (cellSize * launchProgress - launchRadius) : (cellSize * (1 - launchProgress) - launchRadius);
+            const leftDirectionOffset = cellSize * launchProgress - launchRadius;
+            const rightDirectionOffset = cellSize * (1 - launchProgress) - launchRadius;
+            let leftOffset = letter === nextLetter ? (cellSize / 2 - launchRadius) : letter === 'a' && movingLaunch.timer < moveSteps / 2 || letter === 'f' && movingLaunch.timer > moveSteps / 2 ? rightDirectionOffset : (letter === 'a' && movingLaunch.timer > moveSteps / 2 || letter === 'f' && movingLaunch.timer < moveSteps / 2 ? leftDirectionOffset : (address > nextLetter ? leftDirectionOffset : rightDirectionOffset));
+            return <View
+                style={{
+                    borderRadius: cellSize / launchCellRatio,
+                    width: cellSize / launchCellRatio,
+                    height: cellSize / launchCellRatio,
+                    backgroundColor: movingLaunch.myLaunch ? baseColor.sky : baseColor.pink,
+                    position: 'absolute',
+                    left: leftOffset,
+                    top: topOffset,
+                }}
+
+            />;
+        };
+
+        const renderLaunches = (address: string) => {
             const containsTower = launches.find((item) => (item.currentAddress === address && item.points.length === 0));
-            const movingLaunch = launches.find((item) => (item.currentAddress === address && item.points.length > 0));
-            let topOffset = 0;
-            let leftOffset = 0;
-            if (movingLaunch !== undefined) {
-                const letter = address.substring(0, 1);
-                const nextLetter = movingLaunch?.points[0]?.substring(0, 1);
-                const launchRadius = cellSize / (2 * launchCellRatio);
-                const launchProgress = movingLaunch.timer / moveSteps;
-                topOffset = movingLaunch.myLaunch ? (cellSize * launchProgress - launchRadius) : (cellSize * (1 - launchProgress) - launchRadius);
-                const leftDirectionOffset = cellSize * launchProgress - launchRadius;
-                const rightDirectionOffset = cellSize * (1 - launchProgress) - launchRadius;
-                leftOffset = letter === nextLetter ? (cellSize / 2 - launchRadius) : letter === 'a' && movingLaunch.timer < moveSteps / 2 || letter === 'f' && movingLaunch.timer > moveSteps / 2 ? rightDirectionOffset : (letter === 'a' && movingLaunch.timer > moveSteps / 2 || letter === 'f' && movingLaunch.timer < moveSteps / 2 ? leftDirectionOffset : (address > nextLetter ? leftDirectionOffset : rightDirectionOffset));
-                // leftOffset = letter === nextLetter ? cellSize / 2 : letter === 'a' && movingLaunch.timer < moveSteps / 2 || letter === 'f' && movingLaunch.timer > moveSteps / 2 ? rightDirectionOffset : (letter === 'a' && movingLaunch.timer > moveSteps / 2 || letter === 'f' && movingLaunch.timer < moveSteps / 2 ? leftDirectionOffset : (address > nextLetter ? leftDirectionOffset : rightDirectionOffset));
-                // console.log(new Date(), movingLaunch.timer, leftOffset, topOffset);
-            }
-            if (movingLaunch !== undefined || containsTower !== undefined) {
+            const movingLaunches = launches.filter((item) => (item.currentAddress === address && item.points.length > 0));
+            checkNewExplosion(address);
+            if (movingLaunches !== undefined || containsTower !== undefined) {
                 // console.log(launch, address)
                 return <View
                     style={{
@@ -313,25 +401,16 @@ export const GameScreen = ({navigation}: Props) => {
                         top: 0,
                     }}>
                     {containsTower !== undefined && (
-                        <Tower fill={containsTower.myLaunch ? baseColor.sky : baseColor.pink}/>)}
-                    {(movingLaunch) && (<View
-                        style={{
-                            borderRadius: cellSize / launchCellRatio,
-                            width: cellSize / launchCellRatio,
-                            height: cellSize / launchCellRatio,
-                            backgroundColor: movingLaunch.myLaunch ? baseColor.sky : baseColor.pink,
-                            position: 'absolute',
-                            left: leftOffset,
-                            top: topOffset,
-                        }}
-
-                    />)}
+                        <Tower fill={containsTower.myLaunch ? baseColor.sky : baseColor.pink}/>)
+                    }
+                    {containsTower !== undefined && (
+                        <Text> {containsTower.health}</Text>)
+                    }
+                    {(movingLaunches.map((item) => renderLaunch(address, item)))}
                 </View>;
             }
         };
-        // console.log(boardWidth - width)
-        // console.log(gameResult)
-// console.log(launches)
+
         const renderPoint = (address: string, isStartAddress: boolean, color: ColorValue, showCounter: boolean) => {
             const cellSizeWithPadding = (isStartAddress ? cellSize : cellSize / 2) * 0.5;
             const capacity = capacities.find((item) => item.startAddress === address);
@@ -348,7 +427,7 @@ export const GameScreen = ({navigation}: Props) => {
                     }}
 
                 />)}
-                {showCounter && !capacity?.live && (<IconFire/>)}
+                {showCounter && !capacity?.live && (<IconFire size={'80%'}/>)}
                 {showCounter && (<Text
                     style={{
                         position: 'absolute',
@@ -382,13 +461,34 @@ export const GameScreen = ({navigation}: Props) => {
             </View>;
         };
 
+        const playSound = (soundName: string) => {
+            var sound = new Sound(soundName + '.mp3', Sound.MAIN_BUNDLE, (error: any) => {
+                if (error) {
+                    return;
+                }
+                // Play the sound with an onEnd callback
+                sound.play();
+            });
+
+        };
+
+        const renderExplosion = (address: string) => {
+            const explosion = explosions.find((item) => item.address === address);
+            if (explosion !== undefined) {
+                const percent = 100 * explosion.timer / explosionSteps;
+                return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+                    <IconFire size={percent + '%'}/>
+                </View>;
+            }
+        };
+
         const boardSquareCell = (row: number, address: string, color: ColorValue, left: number, top: number) => {
             const isAvailableCell = availableRoutes.find((item: Route) => (item.points.find((point: string) => (point === address)))) !== undefined;
             const indexAddr = currentRoute?.points.indexOf(address) ?? -1;
             const indexEnd = currentRoute?.points.indexOf(endAddress ?? '') ?? -1;
             const addressInCurrentRoute = indexAddr >= 0;
             const isSelectedCell = (currentRoute !== undefined && endAddress !== undefined && addressInCurrentRoute && indexAddr <= indexEnd) || address === startAddress;
-            const pointColor = isSelectedCell ? baseColor.sky : row === 11 ? baseColor.sky_50 : row === 0 && !isAvailableCell ? baseColor.pink : color === baseColor.wood ? baseColor.gray_30 : baseColor.gray_50;
+            const pointColor = isSelectedCell ? baseColor.sky : row === 11 ? baseColor.sky_50 : row === 0 && !isAvailableCell ? baseColor.pink : color === baseColor.wood_25 ? baseColor.gray_30 : baseColor.gray_50;
             return (<TouchableOpacity
                 style={{
                     backgroundColor: color,
@@ -399,7 +499,8 @@ export const GameScreen = ({navigation}: Props) => {
                     top: top,
                 }}
                 onPress={() => getItem(address)}>
-                {(row > 0 && row < 11) && renderLaunch(address)}
+                {renderExplosion(address)}
+                {(row > 0 && row < 11) && renderLaunches(address)}
                 {(row > 0 && row < 11 && address === endAddress && renderAvailableTower())}
                 {(row === 0 && address === endAddress && renderSwordman(address))}
                 {(address !== endAddress && (isAvailableCell || row === 0 || row === 11)) &&
@@ -414,7 +515,7 @@ export const GameScreen = ({navigation}: Props) => {
                     boardSquareCell(
                         row,
                         letters[col] + (12 - row).toString(),
-                        (col + row) % 2 === 0 ? baseColor.white : baseColor.wood,
+                        (col + row) % 2 === 0 ? baseColor.white_25 : baseColor.wood_25,
                         (width - boardWidth) / 2 + col * boardWidth / 6,
                         row * cellSize
                     )

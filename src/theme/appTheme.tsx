@@ -10,7 +10,8 @@ export const baseFontStyle = StyleSheet.create({
 
 export const baseColor = {
   white: 'rgba(255,255,255,1)',
-  wood: 'rgba(51,19,7,0.25)',
+  white_25: 'rgba(255,255,255,0.5)',
+  wood_25: 'rgba(51,19,7,0.25)',
   black: '#000000',
   blue: '#2547bd',
   sky: '#418fff',

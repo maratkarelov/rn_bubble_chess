@@ -9,8 +9,8 @@
     "label": "game",
     "reply": "reply",
     "go": "go",
-    "game_over_win": "Game over\nYou Win",
-    "game_over_lose": "Game over\nYou Lose"
+    "game_over_win": "Вы выиграли",
+    "game_over_lose": "Вы проиграли"
   },
   "profile": {
     "label": "Профіль",

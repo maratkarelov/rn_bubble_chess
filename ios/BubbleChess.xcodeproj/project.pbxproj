@@ -11,6 +11,10 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		149EF64B2AD1C83F000C4B2B /* blaster.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 149EF64A2AD1C83F000C4B2B /* blaster.mp3 */; };
+		149EF64D2AD1CDC1000C4B2B /* win.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 149EF64C2AD1CDC1000C4B2B /* win.mp3 */; };
+		149EF64F2AD1CFC5000C4B2B /* lose.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 149EF64E2AD1CFC5000C4B2B /* lose.mp3 */; };
+		149EF6512AD1F0CE000C4B2B /* armor.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 149EF6502AD1F0CE000C4B2B /* armor.mp3 */; };
 		14D4682A2AB1AF390086DED0 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 14D468292AB1AF390086DED0 /* GoogleService-Info.plist */; };
 		14FB51742AB494FA000A0A51 /* Fontisto.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 14FB51612AB494FA000A0A51 /* Fontisto.ttf */; };
 		14FB51752AB494FA000A0A51 /* Octicons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 14FB51622AB494FA000A0A51 /* Octicons.ttf */; };
@@ -41,6 +45,10 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = NavigationApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = NavigationApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = NavigationApp/main.m; sourceTree = "<group>"; };
+		149EF64A2AD1C83F000C4B2B /* blaster.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = blaster.mp3; path = ../../../../Downloads/blaster.mp3; sourceTree = "<group>"; };
+		149EF64C2AD1CDC1000C4B2B /* win.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = win.mp3; path = ../../../../Downloads/win.mp3; sourceTree = "<group>"; };
+		149EF64E2AD1CFC5000C4B2B /* lose.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = lose.mp3; path = ../../../../Downloads/lose.mp3; sourceTree = "<group>"; };
+		149EF6502AD1F0CE000C4B2B /* armor.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = armor.mp3; path = ../../../../Downloads/armor.mp3; sourceTree = "<group>"; };
 		14D468292AB1AF390086DED0 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		14FB51612AB494FA000A0A51 /* Fontisto.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Fontisto.ttf; sourceTree = "<group>"; };
 		14FB51622AB494FA000A0A51 /* Octicons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Octicons.ttf; sourceTree = "<group>"; };
@@ -84,6 +92,10 @@
 		13B07FAE1A68108700A75B9A /* NavigationApp */ = {
 			isa = PBXGroup;
 			children = (
+				149EF6502AD1F0CE000C4B2B /* armor.mp3 */,
+				149EF64E2AD1CFC5000C4B2B /* lose.mp3 */,
+				149EF64C2AD1CDC1000C4B2B /* win.mp3 */,
+				149EF64A2AD1C83F000C4B2B /* blaster.mp3 */,
 				14FB51602AB494FA000A0A51 /* Fonts */,
 				14D468292AB1AF390086DED0 /* GoogleService-Info.plist */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
@@ -234,7 +246,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				14FB517D2AB494FA000A0A51 /* Ionicons.ttf in Resources */,
+				149EF64B2AD1C83F000C4B2B /* blaster.mp3 in Resources */,
 				14FB51752AB494FA000A0A51 /* Octicons.ttf in Resources */,
+				149EF64D2AD1CDC1000C4B2B /* win.mp3 in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				14FB51802AB494FA000A0A51 /* FontAwesome.ttf in Resources */,
 				14FB51762AB494FA000A0A51 /* Feather.ttf in Resources */,
@@ -242,6 +256,7 @@
 				14FB51862AB494FA000A0A51 /* MaterialIcons.ttf in Resources */,
 				14FB51772AB494FA000A0A51 /* FontAwesome6_Regular.ttf in Resources */,
 				14FB51822AB494FA000A0A51 /* EvilIcons.ttf in Resources */,
+				149EF64F2AD1CFC5000C4B2B /* lose.mp3 in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				14FB517E2AB494FA000A0A51 /* FontAwesome5_Solid.ttf in Resources */,
 				14FB51852AB494FA000A0A51 /* FontAwesome6_Brands.ttf in Resources */,
@@ -254,6 +269,7 @@
 				14FB517B2AB494FA000A0A51 /* AntDesign.ttf in Resources */,
 				14FB51842AB494FA000A0A51 /* SimpleLineIcons.ttf in Resources */,
 				14FB51812AB494FA000A0A51 /* Zocial.ttf in Resources */,
+				149EF6512AD1F0CE000C4B2B /* armor.mp3 in Resources */,
 				14D4682A2AB1AF390086DED0 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

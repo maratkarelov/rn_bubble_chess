@@ -21,8 +21,8 @@ export const Tower = ({fill}: { fill: string }) => (
     )
 ;
 
-export const IconFire = () => (
-    <Svg width="80%" height="80%" viewBox="0 0 256 256">
+export const IconFire = ({size}: { size: string }) => (
+    <Svg width={size} height={size} viewBox="0 0 256 256">
 
         <Defs/>
         <G style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;"
