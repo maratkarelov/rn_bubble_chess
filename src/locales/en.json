@@ -1,12 +1,29 @@
 {
+  "ok": "ok",
+  "cancel": "cancel",
   "auth": {
+    "auth/wrong-password": "wrong-password",
+    "auth/email-already-in-use": "email-already-in-use",
+    "auth/invalid-email": "invalid-email",
+    "auth/user-not-found": "user nor found",
+    "title": "Auth",
+    "sign_in": "sign in",
+    "sign_up": "sign up",
+    "dont_have_account": "don't have an account?",
     "email_not_valid": "email is not valid"
   },
+  "registration": {
+    "title": "registration",
+    "create_account": "create account"
+  },
   "home": {
-    "label": "Home",
-    "new_game": "New game" },
+    "label": "Home"
+  },
   "game": {
     "label": "game",
+    "training_game": "Training game",
+    "online_game": "Online game",
+    "new_game": "New game",
     "reply": "reply",
     "go": "go",
     "game_over_win": "Game over\nYou Win",

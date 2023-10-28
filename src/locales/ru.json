@@ -1,11 +1,27 @@
 {
   "auth": {
+    "auth/wrong-password": "wrong-password",
+    "auth/email-already-in-use": "email-already-in-use",
+    "auth/invalid-email": "invalid-email",
+    "title": "Auth",
+    "sign_in": "Вход",
+    "sign_up": "Регистрация",
+    "dont_have_account": "don't have an account?",
     "email_not_valid": "email is not valid"
   },
   "home": {
     "label": "Home",
+    "online": "В сети",
+    "i_invite": "Исходящие",
+    "me_invited": "Входящие",
     "new_game": "Новая игра" },
+  "notepad": {
+    "label": "notepad"
+  },
   "game": {
+    "invite": "Пригласить",
+    "accept": "Принять приглашение",
+    "waiting": "Ожидаю игрока",
     "label": "game",
     "reply": "reply",
     "go": "go",

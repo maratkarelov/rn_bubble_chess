@@ -6,7 +6,7 @@ import messaging from '@react-native-firebase/messaging';
 import {firebase} from '@react-native-firebase/auth';
 import PushNotification, {Importance} from 'react-native-push-notification';
 import {StackNavigator} from './src/navigator/StackNavigator';
-import {PermissionsAndroid, Platform,} from 'react-native';
+import {PermissionsAndroid, Platform} from 'react-native';
 // import {
 //     FIREBASE_API_KEY_ANDROID,
 //     FIREBASE_API_KEY_IOS,
@@ -19,10 +19,10 @@ import {PermissionsAndroid, Platform,} from 'react-native';
 //
 // // firebase android config
 const androidCredentials = {
-    appId: "1:225653718903:android:a2857b9ad6dc9970d16b72",
-    apiKey: "AIzaSyBV1z1LulOqq-hzdNQvdfLuOqWXYvTtRSU",
-    projectId: "bubbles-6452d",
-    messagingSenderId: "225653718903",
+    appId: '1:225653718903:android:a2857b9ad6dc9970d16b72',
+    apiKey: 'AIzaSyBV1z1LulOqq-hzdNQvdfLuOqWXYvTtRSU',
+    projectId: 'bubbles-6452d',
+    messagingSenderId: '225653718903',
 };
 //
 // // firebase ios config
@@ -35,11 +35,11 @@ const androidCredentials = {
 // };
 
 const iosCredentials = {
-    apiKey: "AIzaSyAoxyNoY_S1j8ISJg5ZJXjJZGjEGTuDodQ",
-    projectId: "bubbles-6452d",
-    storageBucket: "bubbles-6452d.appspot.com",
-    messagingSenderId: "225653718903",
-    appId: "1:225653718903:ios:08e5b6607c6e3f55d16b72",
+    apiKey: 'AIzaSyAoxyNoY_S1j8ISJg5ZJXjJZGjEGTuDodQ',
+    projectId: 'bubbles-6452d',
+    storageBucket: 'bubbles-6452d.appspot.com',
+    messagingSenderId: '225653718903',
+    appId: '1:225653718903:ios:08e5b6607c6e3f55d16b72',
 };
 
 const App = () => {
@@ -88,9 +88,9 @@ const App = () => {
     });
 
     return (
-        <NavigationContainer>
-            <StackNavigator/>
-        </NavigationContainer>
+            <NavigationContainer>
+                <StackNavigator/>
+            </NavigationContainer>
     );
 };
 

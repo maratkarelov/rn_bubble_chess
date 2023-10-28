@@ -4,8 +4,8 @@ import {HomeScreen} from '../../screens/home';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {ProfileScreen} from '../../screens/profile';
-import auth from "@react-native-firebase/auth";
 import I18n from "../../locales/i18n";
+import {NotepadScreen} from "../../screens/notepad";
 
 const Tab = createBottomTabNavigator();
 
@@ -18,13 +18,7 @@ export const MainScreen = ({navigation}: Props) => {
             headerBackTitle: '',
         });
     }, [navigation]);
-    auth().onAuthStateChanged((user) => {
-        if (user === null) {
-            navigation.goBack()
-        }
-        return true;
 
-    });
     return (
         <Tab.Navigator>
             <Tab.Screen name="HomeScreen"
@@ -35,6 +29,15 @@ export const MainScreen = ({navigation}: Props) => {
                                 <MaterialCommunityIcons name="view-dashboard" color={color} size={size}/>
                             ),
                             tabBarBadge: 3,
+                        }}/>
+            <Tab.Screen name="NotepadScreen"
+                        component={NotepadScreen}
+                        options={{
+                            tabBarLabel: I18n.t('notepad.label'),
+                            tabBarIcon: ({color, size}) => (
+                                <MaterialCommunityIcons name="view-dashboard" color={color} size={size}/>
+                            ),
+                            tabBarBadge: 4,
                         }}/>
             <Tab.Screen name="ProfileScreen"
                         component={ProfileScreen}

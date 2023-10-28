@@ -5,9 +5,13 @@ import {MainScreen} from '../screens/main';
 import {SettingsScreen} from "../screens/profile/settings";
 import I18n from "../locales/i18n";
 import {GameScreen} from "../screens/game";
+import {AuthScreen} from "../screens/auth";
+import RegistrationScreen from "../screens/auth/registration";
 
 export type RootStackParams = {
     StartScreen: undefined;
+    AuthScreen: undefined;
+    RegistrationScreen: undefined;
     MainScreen: undefined;
     GameScreen: undefined;
     SettingsScreen: undefined;
@@ -36,6 +40,16 @@ export const StackNavigator = () => {
                 name="StartScreen"
                 options={{headerShown: false}}
                 component={StartScreen}
+            />
+            <Stack.Screen
+                name="AuthScreen"
+                options={{title: I18n.t('auth.title')}}
+                component={AuthScreen}
+            />
+            <Stack.Screen
+                name="RegistrationScreen"
+                options={{title: I18n.t('registration.title')}}
+                component={RegistrationScreen}
             />
             <Stack.Screen
                 name="MainScreen"

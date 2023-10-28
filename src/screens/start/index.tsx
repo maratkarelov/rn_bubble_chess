@@ -1,136 +1,64 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useState} from 'react';
-import {
-    ActivityIndicator,
-    Dimensions,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-
-import auth from '@react-native-firebase/auth';
+import {ActivityIndicator, Dimensions, Image, View} from 'react-native';
 import Styles from './styles';
-import {useFormik} from 'formik';
-import * as yup from 'yup';
 import I18n from '../../locales/i18n';
+import ActionButton from "../../components/ActionButton";
+import {baseColor} from "../../theme/appTheme";
+import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
+
+const earthImage = require('../../assets/earth_from_moon.jpg');
 
 interface Props extends StackScreenProps<any, any> {
 }
 
 export const StartScreen = ({navigation}: Props) => {
-    const [loading, setLoading] = useState(false);
-    const register = () => {
-        setLoading(true);
-        auth()
-            .createUserWithEmailAndPassword(formik.values.email, formik.values.password)
-            .then(() => {
-                setLoading(false);
-            })
-            .catch(error => {
-                setLoading(false);
-                if (error.code === 'auth/email-already-in-use') {
-                }
+    const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(null)
+    const {width, height} = Dimensions.get('window');
 
-                if (error.code === 'auth/invalid-email') {
-                }
+    function newGame() {
+        navigation.navigate('GameScreen')
+    }
 
-                console.error(error);
-            });
+    function openAuth() {
+        navigation.navigate('AuthScreen')
+    }
 
-    };
-
-    const handleAuth = () => {
-        setLoading(true);
-        console.log(formik.values.email, formik.values.password)
-        Keyboard.dismiss();
-        auth()
-            .signInWithEmailAndPassword(formik.values.email, formik.values.password )
-            .then(() => {
-                setLoading(false);
-            })
-            .catch(error => {
-                setLoading(false);
-                if (error.code === 'auth/email-already-in-use') {
-                }
-                register();
-
-                if (error.code === 'auth/invalid-email') {
-                }
-
-                console.error(error);
-            });
-
-    };
-    const validationSchema = yup.object().shape({
-        code: yup.string(),
-        email: yup.string().email(I18n.t('validate.email_not_valid')),
-    });
-
-    const formik = useFormik({
-        initialValues: {email: '', password: ''},
-        validationSchema: validationSchema,
-        onSubmit: handleAuth,
-        onReset: () => {
-        },
-    });
     auth().onAuthStateChanged((user) => {
-            console.log(user)
+            console.log(user);
+            // setCurrentUser(user)
             if (user != null) {
                 navigation.navigate('MainScreen');
             }
             return true;
         }
-    )
-    ;
-    const {width, height} = Dimensions.get('window');
-
-    if (loading) {
-        return <ActivityIndicator
-            styleAttr={'LargeInverse'}
-            style={{
-                position: 'absolute',
-                left: width / 2,
-                height: height / 2,
-                justifyContent: 'center',
-                alignItems: 'center',
-                // @ts-ignore
-                color: '#000',
-            }}/>;
-    }
-
-    return (
-        <View style={Styles.container}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={Styles.writeTaskWrapper}
-            >
-                <View style={Styles.inputs}>
-                    <TextInput
-                        style={Styles.email}
-                        placeholder={'email'}
-                        inputMode="email"
-                        defaultValue={formik.values.email}
-                        onChangeText={formik.handleChange('email')}
-
-                    />
-                    {formik.errors.email && (<Text>{formik.errors.email}</Text>)}
-                    <TextInput
-                        style={Styles.input}
-                        placeholder={'password'}
-                        textContentType="password"
-                        defaultValue={formik.values.password}
-                        onChangeText={formik.handleChange('password')}
-                    />
-                    <TouchableOpacity onPress={() => formik.handleSubmit()}>
-                        <View style={Styles.login}>
-                            <Text style={Styles.addText}>Авторизоваться</Text>
-                        </View>
-                    </TouchableOpacity>
+    );
+    if (currentUser === null) {
+        return (
+            <View style={Styles.container}>
+                <Image style={{}} source={earthImage}/>
+                <View style={Styles.training}>
+                    <ActionButton backgroundColor={baseColor.sky} textColor={baseColor.white} onPress={newGame}
+                                  title={I18n.t('game.training_game')}/>
                 </View>
-            </KeyboardAvoidingView>
-        </View>);
-}
+                <View style={Styles.online}>
+                    <ActionButton backgroundColor={baseColor.yellow} textColor={baseColor.black} onPress={openAuth}
+                                  title={I18n.t('game.online_game')}/>
+                </View>
+            </View>);
+    }
+    return <ActivityIndicator
+        styleAttr={'LargeInverse'}
+        style={{
+            position: 'absolute',
+            left: width / 2,
+            height: height / 2,
+            justifyContent: 'center',
+            alignItems: 'center',
+            // @ts-ignore
+            color: '#000',
+        }}/>;
+    ;
+
+
+};

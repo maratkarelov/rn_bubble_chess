@@ -4,7 +4,7 @@ import {ColorValue, Dimensions, Platform, Text, TouchableOpacity, View} from 're
 import Styles from '../game/styles';
 import {baseColor} from '../../theme/appTheme';
 import {IconFire, Swordman, Tower} from '../../svg';
-import CustomButton from '../../components/CustomButton';
+import ActionButton from '../../components/ActionButton';
 import {myRoutes, playerRoutes, StartCapacity} from '../game/gameCollections';
 import i18n from '../../locales/i18n';
 
@@ -354,7 +354,9 @@ export const GameScreen = ({navigation}: Props) => {
                 headerShown: true,
                 headerBackTitle: '',
                 headerRight: () => ((readyForMyLaunch || gameResult !== undefined) &&
-                    <CustomButton
+                    <ActionButton
+                        isLoading={false}
+                        disable={false}
                         onPress={() => gameResult !== undefined ? newGame() : handleMyLaunch(currentRoute, startAddress, endAddress)}
                         title={i18n.t(gameResult !== undefined ? 'game.reply' : 'game.go')}
                     />
@@ -515,7 +517,7 @@ export const GameScreen = ({navigation}: Props) => {
                     boardSquareCell(
                         row,
                         letters[col] + (12 - row).toString(),
-                        (col + row) % 2 === 0 ? baseColor.white_25 : baseColor.wood_25,
+                        (col + row) % 2 === 0 ? baseColor.white_50 : baseColor.wood_25,
                         (width - boardWidth) / 2 + col * boardWidth / 6,
                         row * cellSize
                     )
