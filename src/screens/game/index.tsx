@@ -1,12 +1,25 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
-import {ColorValue, Dimensions, Platform, Text, TouchableOpacity, View} from 'react-native';
+import {
+    Alert,
+    BackHandler,
+    ColorValue,
+    Dimensions,
+    Modal,
+    Platform,
+    Pressable,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import Styles from '../game/styles';
 import {baseColor} from '../../theme/appTheme';
-import {IconFire, Swordman, Tower} from '../../svg';
+import {IconBack, IconFire, Swordman, Tower} from '../../svg';
 import ActionButton from '../../components/ActionButton';
 import {myRoutes, playerRoutes, StartCapacity} from '../game/gameCollections';
-import i18n from '../../locales/i18n';
+import I18n from '../../locales/i18n';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 interface Props extends StackScreenProps<any, any> {
 }
@@ -39,12 +52,14 @@ interface Explosion {
     timer: number
 }
 
-export const GameScreen = ({navigation}: Props) => {
+export const GameScreen = ({route, navigation}: Props) => {
+        const {initInvite, inviteRef} = route.params;
         const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
         const timer = 50;
         const moveSteps = 100;
         const launchCellRatio = 5;
         const explosionSteps = 5;
+        const [invite, setInvite] = useState(initInvite);
         const [startAddress, setStartAddress] = useState<string | undefined>(undefined);
         const [endAddress, setEndAddress] = useState<string | undefined>(undefined);
         const [currentRoute, setCurrentRoute] = useState<Route | undefined>(undefined);
@@ -57,6 +72,9 @@ export const GameScreen = ({navigation}: Props) => {
         const [readyForMyLaunch, setReadyForMyLaunch] = useState(false);
         const [readyForHisLaunch, setReadyForHisLaunch] = useState(true);
         const [gameResult, setGameResult] = useState<boolean | undefined>(undefined);
+        const [modalVisible, setModalVisible] = useState(false);
+        const uid = auth().currentUser?.uid;
+        const userRef = firestore().collection('users').doc(uid);
 
         var Sound = require('react-native-sound');
         // Enable playback in silence mode
@@ -94,10 +112,36 @@ export const GameScreen = ({navigation}: Props) => {
             setCapacities(newCapacities);
 
         };
+
+        function listenInvite() {
+            inviteRef
+                .onSnapshot((querySnapshot: { data: () => any; }) => {
+                    const queryInvite = querySnapshot.data();
+                    if (queryInvite?.loserRef && queryInvite?.loserRef?.id !== userRef.id) {
+                        // opponent gave up
+                        console.log(Platform.OS, queryInvite?.loserRef?.id,' loser, ***************,\ni am', userRef.id);
+                        setInvite(queryInvite);
+                        setModalVisible(true);
+                    }
+                });
+        }
+
         useEffect(() => {
             refillCapacities();
+            listenInvite();
+            const backAction = () => {
+                setModalVisible(true);
+                return true;
+            };
+
+            const backHandler = BackHandler.addEventListener(
+                'hardwareBackPress',
+                backAction,
+            );
+
+            return () => backHandler.remove();
+
         }, []);
-        // console.log(timeLeft);
 
         const checkNewExplosion = (address: string) => {
             const myTower = launches.find((item) => (item.currentAddress === address && item.myLaunch && item.currentAddress === item.endAddress));
@@ -145,7 +189,7 @@ export const GameScreen = ({navigation}: Props) => {
                 newExplosion(address);
             }
 
-        }
+        };
 
         const newExplosion = (address: string) => {
             const newExplosion: Explosion = {
@@ -192,25 +236,24 @@ export const GameScreen = ({navigation}: Props) => {
                         item.timer = item.timer - 1;
                         explosionsUpdated = true;
                     } else {
-                        console.log('active explosions', new Date(), explosions);
                         setExplosions(explosions.filter((value) => value.timer > 0));
                     }
                 });
                 if (explosionsUpdated) {
-                    console.log('explosions updated', new Date(), explosions);
                     setExplosions(explosions);
                 }
                 if (capacityUpdated) {
-                    // console.log('capacityUpdated');
                     const value = capacities.find((item) => !item.live);
-                    // console.log('setGameOver', value);
                     setGameResult(!value?.myCapacity);
+                    if (!value?.myCapacity) {
+                        firestore().collection('invites').doc(invite.key).update('winner', userRef);
+                    }
+
                     setCapacities(capacities);
                     playSound(value?.myCapacity ? 'lose' : 'win');
 
                 }
                 if (launchUpdated) {
-                    // console.log(launches)
                     setLaunches(launches);
                 }
 
@@ -288,7 +331,6 @@ export const GameScreen = ({navigation}: Props) => {
                         points: route?.points.slice(1, endIndex + 1),
                         endAddress: end,
                     };
-                    // console.log(newLaunch)
                     setLaunches(launches => [...launches, newLaunch]);
                     if (myLaunch) {
                         setCurrentRoute(undefined);
@@ -353,17 +395,72 @@ export const GameScreen = ({navigation}: Props) => {
             navigation.setOptions({
                 headerShown: true,
                 headerBackTitle: '',
+                headerTitle: invite?.userRef.id === userRef.id ? invite?.author.name : invite?.user.name,
+                headerLeft: () => (
+                    <TouchableOpacity style={Styles.back}
+                                      onPress={() => setModalVisible(true)}>
+                        <IconBack />
+                    </TouchableOpacity>
+                ),
                 headerRight: () => ((readyForMyLaunch || gameResult !== undefined) &&
                     <ActionButton
                         isLoading={false}
                         disable={false}
                         onPress={() => gameResult !== undefined ? newGame() : handleMyLaunch(currentRoute, startAddress, endAddress)}
-                        title={i18n.t(gameResult !== undefined ? 'game.reply' : 'game.go')}
+                        title={I18n.t(gameResult !== undefined ? 'game.reply' : 'game.go')}
                     />
                 ),
             });
         }, [readyForMyLaunch, gameResult, currentRoute, endAddress, navigation, startAddress]);
 
+
+        function cancelGame() {
+            return firestore().runTransaction(async transaction => {
+                // Get post data first
+                const userSnapshot = await transaction.get(userRef);
+                if (!userSnapshot.exists) {
+                    throw 'User does not exist!';
+                }
+                transaction.update(userRef, {
+                    loses: (userSnapshot.data()?.loses ?? 0) + 1
+                });
+                transaction.update(inviteRef, {
+                    loserRef: userRef ,
+                });
+            }).then(exitGame);
+        }
+
+        function exitGame() {
+            userRef.update('iAmReady', true).then(()=>{
+                navigation.navigate('HomeScreen');
+            });
+        }
+
+
+        const renderDialog = () => {
+            return (<Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+            >
+                <View style={Styles.centeredView}>
+                    <View style={Styles.modalView}>
+                        <Text style={Styles.modalText}>{I18n.t(invite?.loserRef ?  'game.opponent_gave_up' : 'game.exit_game')}</Text>
+                        <Pressable
+                            style={[Styles.button, Styles.buttonOpen]}
+                            onPress={() => invite.loserRef ? exitGame() : cancelGame()}>
+                            <Text style={Styles.textStyle}>{I18n.t(invite.loserRef ? 'i_see' : 'ok')}</Text>
+                        </Pressable>
+                        {invite?.loserRef === null && <Pressable
+                            style={[Styles.button, Styles.buttonClose]}
+                            onPress={() => setModalVisible(false)}>
+                            <Text style={Styles.textStyle}>{I18n.t('cancel')}</Text>
+                        </Pressable>}
+                    </View>
+                </View>
+            </Modal>);
+
+        };
 
         const renderLaunch = (address: string, movingLaunch: Launch) => {
             const letter = address.substring(0, 1);
@@ -393,7 +490,6 @@ export const GameScreen = ({navigation}: Props) => {
             const movingLaunches = launches.filter((item) => (item.currentAddress === address && item.points.length > 0));
             checkNewExplosion(address);
             if (movingLaunches !== undefined || containsTower !== undefined) {
-                // console.log(launch, address)
                 return <View
                     style={{
                         width: cellSize,
@@ -441,7 +537,6 @@ export const GameScreen = ({navigation}: Props) => {
             </View>;
 
         };
-// console.log(launches)
         const renderAvailableTower = () => {
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
                 <Tower fill={baseColor.blue}/>
@@ -527,12 +622,13 @@ export const GameScreen = ({navigation}: Props) => {
 
         return (
             <View style={Styles.container}>
+                {renderDialog()}
                 {rows}
                 {gameResult !== undefined && <Text style={{
                     fontSize: 60,
                     textAlign: 'center',
                     top: boardHeight / 2 - 70,
-                }}>{i18n.t(gameResult ? 'game.game_over_win' : 'game.game_over_lose')}</Text>}
+                }}>{I18n.t(gameResult ? 'game.game_over_win' : 'game.game_over_lose')}</Text>}
             </View>
         );
 

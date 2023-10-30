@@ -74,7 +74,6 @@ const RegistrationScreen = ({navigation}: Props) => {
         </Modal>);
 
     };
-    console.log(formik.isValid);
 
     return (
         <View style={Styles.container}>

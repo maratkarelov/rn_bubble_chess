@@ -99,11 +99,11 @@ export default StyleSheet.create({
         padding: 10,
         elevation: 2,
     },
-    buttonOpen: {
-        backgroundColor: '#F194FF',
+    buttonConfirm: {
+        backgroundColor: baseColor.sky,
     },
-    buttonClose: {
-        backgroundColor: '#2196F3',
+    buttonCancel: {
+        backgroundColor: baseColor.gray,
     },
     textStyle: {
         color: 'white',

@@ -25,7 +25,6 @@ export const StartScreen = ({navigation}: Props) => {
     }
 
     auth().onAuthStateChanged((user) => {
-            console.log(user);
             // setCurrentUser(user)
             if (user != null) {
                 navigation.navigate('MainScreen');

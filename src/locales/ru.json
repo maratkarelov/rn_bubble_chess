@@ -1,4 +1,7 @@
 {
+  "ok": "Да",
+  "cancel": "Отмена",
+  "i_see": "Понятно",
   "auth": {
     "auth/wrong-password": "wrong-password",
     "auth/email-already-in-use": "email-already-in-use",
@@ -22,6 +25,8 @@
     "invite": "Пригласить",
     "accept": "Принять приглашение",
     "waiting": "Ожидаю игрока",
+    "exit_game": "Выйти из игры?",
+    "opponent_gave_up": "Соперник сдался",
     "label": "game",
     "reply": "reply",
     "go": "go",

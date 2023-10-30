@@ -87,6 +87,7 @@ export const HomeScreen = ({navigation}: Props) => {
         const meInvitedSubscriber = firestore()
             .collection('invites')
             .where('userRef', '==', userRef)
+            .where('loserRef', '==', null)
             .onSnapshot(querySnapshot => {
                 const items: any[] = [];
                 querySnapshot.forEach(documentSnapshot => {
@@ -100,6 +101,7 @@ export const HomeScreen = ({navigation}: Props) => {
         const iInvitedSubscriber = firestore()
             .collection('invites')
             .where('authorRef', '==', userRef)
+            .where('loserRef', '==', null)
             .onSnapshot(querySnapshot => {
                 const items: any[] = [];
                 querySnapshot.forEach(documentSnapshot => {
@@ -121,14 +123,18 @@ export const HomeScreen = ({navigation}: Props) => {
     }, []);
 
     function listenInvite(clickInviteRef: FirebaseFirestoreTypes.DocumentReference<FirebaseFirestoreTypes.DocumentData>) {
-        clickInviteRef
+        const subscriber = clickInviteRef
             .onSnapshot(querySnapshot => {
                 const waitingInvite = querySnapshot.data();
+                setSelectedItem({data: waitingInvite});
                 if (waitingInvite?.waitingAuthor + waitingInvite?.waitingUser === 2) {
                     setModalVisible(false);
-                    navigation.navigate('GameScreen');
+                    userRef.update('iAmReady', false).then(() => {
+                        console.log('===============================\n',Platform.OS,'\n===================================')
+                        subscriber();
+                        navigation.navigate('GameScreen', {initInvite: waitingInvite, inviteRef: clickInviteRef});
+                    });
                 }
-                console.log('waitingInvite', Platform.OS, waitingInvite?.waitingAuthor, waitingInvite?.waitingUser);
             });
     }
 
@@ -164,6 +170,7 @@ export const HomeScreen = ({navigation}: Props) => {
     const inviteUser = () => {
         const addInviteRef = firestore().collection('invites').doc();
         addInviteRef.set({
+            loserRef: null,
             waitingAuthor: 1,
             waitingUser: 0,
             authorRef: userRef,
@@ -177,18 +184,20 @@ export const HomeScreen = ({navigation}: Props) => {
     };
 
     function cancelWaiting() {
-        if (inviteRef !== undefined) {
+        if (inviteRef === undefined) {
+            setModalVisible(false);
+        } else {
             const waitingField = selectedItem?.data?.authorRef?.id === userRef?.id ? waitingAuthor : waitingUser;
             inviteRef.update(waitingField, 0).then(() => {
                 setInviteRef(undefined);
                 setModalVisible(false);
-                console.log('cancelWaiting');
             });
         }
     }
 
     const renderDialog = () => {
-        const action = selectedItem?.data?.author ? waiting : invite;
+        const name = selectedItem?.data?.author === undefined ? selectedItem?.data?.name : selectedItem?.data.authorRef.id === userRef.id ? selectedItem?.data?.user?.name : selectedItem?.data?.author?.name;
+        const action = selectedItem?.data?.author === undefined ? invite : waiting;
         return (<Modal
             animationType="slide"
             transparent={true}
@@ -196,14 +205,14 @@ export const HomeScreen = ({navigation}: Props) => {
         >
             <View style={Styles.centeredView}>
                 <View style={Styles.modalView}>
-                    <Text style={Styles.modalText}>{I18n.t('game.' + action)}</Text>
+                    <Text style={Styles.modalText}>{I18n.t('game.' + action)} {name} {action === invite ? '?' : ''}</Text>
                     {action === invite && (<Pressable
-                        style={[Styles.button, Styles.buttonClose]}
+                        style={[Styles.button, Styles.buttonConfirm]}
                         onPress={inviteUser}>
                         <Text style={Styles.textStyle}>{I18n.t('ok')}</Text>
                     </Pressable>)}
                     <Pressable
-                        style={[Styles.button, Styles.buttonClose]}
+                        style={[Styles.button, Styles.buttonCancel]}
                         onPress={cancelWaiting}>
                         <Text style={Styles.textStyle}>{I18n.t('cancel')}</Text>
                     </Pressable>
