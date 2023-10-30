@@ -20,6 +20,7 @@ import {myRoutes, playerRoutes, StartCapacity} from '../game/gameCollections';
 import I18n from '../../locales/i18n';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import {firestoreCollections, firestoreFields} from '../../constants/firestore';
 
 interface Props extends StackScreenProps<any, any> {
 }
@@ -74,7 +75,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         const [gameResult, setGameResult] = useState<boolean | undefined>(undefined);
         const [modalVisible, setModalVisible] = useState(false);
         const uid = auth().currentUser?.uid;
-        const userRef = firestore().collection('users').doc(uid);
+        const userRef = firestore().collection(firestoreCollections.USERS).doc(uid);
 
         var Sound = require('react-native-sound');
         // Enable playback in silence mode
@@ -119,7 +120,6 @@ export const GameScreen = ({route, navigation}: Props) => {
                     const queryInvite = querySnapshot.data();
                     if (queryInvite?.loserRef && queryInvite?.loserRef?.id !== userRef.id) {
                         // opponent gave up
-                        console.log(Platform.OS, queryInvite?.loserRef?.id,' loser, ***************,\ni am', userRef.id);
                         setInvite(queryInvite);
                         setModalVisible(true);
                     }
@@ -245,8 +245,8 @@ export const GameScreen = ({route, navigation}: Props) => {
                 if (capacityUpdated) {
                     const value = capacities.find((item) => !item.live);
                     setGameResult(!value?.myCapacity);
-                    if (!value?.myCapacity) {
-                        firestore().collection('invites').doc(invite.key).update('winner', userRef);
+                    if (value?.myCapacity) {
+                        firestore().collection(firestoreCollections.INVITES).doc(invite.key).update(firestoreFields.LOSER_REF, userRef);
                     }
 
                     setCapacities(capacities);
@@ -311,6 +311,7 @@ export const GameScreen = ({route, navigation}: Props) => {
 
         const handleMyLaunch = (route: Route | undefined, start: string | undefined, end: string | undefined) => {
             setReadyForMyLaunch(false);
+            // firestore().collection(firestoreCollections.INVITES).
             launch(route, start, end, true);
         };
 
@@ -399,7 +400,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                 headerLeft: () => (
                     <TouchableOpacity style={Styles.back}
                                       onPress={() => setModalVisible(true)}>
-                        <IconBack />
+                        <IconBack/>
                     </TouchableOpacity>
                 ),
                 headerRight: () => ((readyForMyLaunch || gameResult !== undefined) &&
@@ -413,29 +414,20 @@ export const GameScreen = ({route, navigation}: Props) => {
             });
         }, [readyForMyLaunch, gameResult, currentRoute, endAddress, navigation, startAddress]);
 
-
-        function cancelGame() {
-            return firestore().runTransaction(async transaction => {
-                // Get post data first
-                const userSnapshot = await transaction.get(userRef);
-                if (!userSnapshot.exists) {
-                    throw 'User does not exist!';
-                }
-                transaction.update(userRef, {
-                    loses: (userSnapshot.data()?.loses ?? 0) + 1
-                });
-                transaction.update(inviteRef, {
-                    loserRef: userRef ,
-                });
-            }).then(exitGame);
-        }
-
         function exitGame() {
-            userRef.update('iAmReady', true).then(()=>{
-                navigation.navigate('HomeScreen');
+            const inviteField = invite.loserRef ? firestoreFields.WINNER_REF : firestoreFields.LOSER_REF;
+            inviteRef.update(inviteField, userRef).then(() => {
+                const userField = invite.loserRef ? firestoreFields.WINS : firestoreFields.LOSES;
+                const prevCount = invite.userRef.id === userRef.id ? invite.user[userField] : invite.author[userField];
+                userRef.update({
+                    [firestoreFields.I_AM_READY]: true,
+                    [userField]: (prevCount ?? 0) + 1,
+                })
+                    .then(() => {
+                        navigation.navigate('HomeScreen');
+                    });
             });
         }
-
 
         const renderDialog = () => {
             return (<Modal
@@ -445,10 +437,11 @@ export const GameScreen = ({route, navigation}: Props) => {
             >
                 <View style={Styles.centeredView}>
                     <View style={Styles.modalView}>
-                        <Text style={Styles.modalText}>{I18n.t(invite?.loserRef ?  'game.opponent_gave_up' : 'game.exit_game')}</Text>
+                        <Text
+                            style={Styles.modalText}>{I18n.t(invite?.loserRef ? 'game.opponent_gave_up' : 'game.exit_game')}</Text>
                         <Pressable
                             style={[Styles.button, Styles.buttonOpen]}
-                            onPress={() => invite.loserRef ? exitGame() : cancelGame()}>
+                            onPress={() => exitGame()}>
                             <Text style={Styles.textStyle}>{I18n.t(invite.loserRef ? 'i_see' : 'ok')}</Text>
                         </Pressable>
                         {invite?.loserRef === null && <Pressable

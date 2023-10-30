@@ -9,6 +9,7 @@ import firestore from '@react-native-firebase/firestore';
 import * as yup from 'yup';
 import {useFormik} from 'formik';
 import {StackScreenProps} from '@react-navigation/stack';
+import {firestoreCollections} from "../../../constants/firestore";
 
 interface Props extends StackScreenProps<any, any> {
 }
@@ -26,7 +27,7 @@ const RegistrationScreen = ({navigation}: Props) => {
                 setLoading(false);
                 const uid = auth().currentUser?.uid;
                 if (uid !== undefined) {
-                    const usersCollection = firestore().collection('users');
+                    const usersCollection = firestore().collection(firestoreCollections.USERS);
                     usersCollection.doc(uid).set({
                         name: formik.values.name,
                     }).then(() => {

@@ -1,12 +1,12 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
-import {FlatList, Modal, Platform, Pressable, Text, TouchableOpacity, View} from 'react-native';
+import {FlatList, Modal, Pressable, Text, TouchableOpacity, View} from 'react-native';
 import Styles from '../home/styles';
 import I18n from '../../locales/i18n';
 import firestore, {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {baseColor} from '../../theme/appTheme';
-import crashlytics from '@react-native-firebase/crashlytics';
+import {firestoreCollections, firestoreFields} from '../../constants/firestore';
 
 interface Props extends StackScreenProps<any, any> {
 }
@@ -17,8 +17,6 @@ const waitingAuthor = 'waitingAuthor';
 const waitingUser = 'waitingUser';
 
 export const HomeScreen = ({navigation}: Props) => {
-    const [loading, setLoading] = useState(true); // Set loading to true on component mount
-    const [iAmReady, setIAmReady] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]); // Initial empty array of users
     const [meInviteUsers, setMeInviteUsers] = useState<any[] | undefined>(undefined); // Initial empty array of users
     const [iInviteUsers, setIInviteUsers] = useState<any[] | undefined>(undefined); // Initial empty array of users
@@ -27,20 +25,13 @@ export const HomeScreen = ({navigation}: Props) => {
     const [inviteRef, setInviteRef] = useState<FirebaseFirestoreTypes.DocumentReference | undefined>(undefined);
     const [user, setUser] = useState<any | undefined>(undefined);
     const uid = auth().currentUser?.uid;
-    const userRef = firestore().collection('users').doc(uid);
+    const userRef = firestore().collection(firestoreCollections.USERS).doc(uid);
 
     async function readDbUser() {
         const userDocumentSnapshot = await userRef.get();
         setUser(userDocumentSnapshot.data());
     }
 
-    const toggleSwitch = () => {
-        if (uid !== undefined) {
-            userRef.update('iAmReady', !iAmReady).then(() => {
-                setIAmReady(previousState => !previousState);
-            });
-        }
-    };
     useEffect(() => {
         navigation.setOptions({
             headerShown: false,
@@ -56,9 +47,8 @@ export const HomeScreen = ({navigation}: Props) => {
         });
         const uniqueExcludeUsers = Array.from(new Set(excludeUsers));
         const onlineUsersSubscriber = firestore()
-            .collection('users')
-            .where('iAmReady', '==', true)
-            // .where('user.name', '==', 'Marat')
+            .collection(firestoreCollections.USERS)
+            .where(firestoreFields.I_AM_READY, '==', true)
             .where(firestore.FieldPath.documentId(), 'not-in', uniqueExcludeUsers)
             .onSnapshot({
                 error: (e) => console.log('*****************', e),
@@ -72,7 +62,6 @@ export const HomeScreen = ({navigation}: Props) => {
                     });
 
                     setOnlineUsers(items);
-                    setLoading(false);
                 },
             });
         return () => {
@@ -85,9 +74,9 @@ export const HomeScreen = ({navigation}: Props) => {
         });
 
         const meInvitedSubscriber = firestore()
-            .collection('invites')
-            .where('userRef', '==', userRef)
-            .where('loserRef', '==', null)
+            .collection(firestoreCollections.INVITES)
+            .where(firestoreFields.USER_REF, '==', userRef)
+            .where(firestoreFields.LOSER_REF, '==', null)
             .onSnapshot(querySnapshot => {
                 const items: any[] = [];
                 querySnapshot.forEach(documentSnapshot => {
@@ -99,9 +88,9 @@ export const HomeScreen = ({navigation}: Props) => {
                 setMeInviteUsers(items);
             });
         const iInvitedSubscriber = firestore()
-            .collection('invites')
-            .where('authorRef', '==', userRef)
-            .where('loserRef', '==', null)
+            .collection(firestoreCollections.INVITES)
+            .where(firestoreFields.AUTHOR_REF, '==', userRef)
+            .where(firestoreFields.LOSER_REF, '==', null)
             .onSnapshot(querySnapshot => {
                 const items: any[] = [];
                 querySnapshot.forEach(documentSnapshot => {
@@ -110,8 +99,6 @@ export const HomeScreen = ({navigation}: Props) => {
                         key: documentSnapshot.id,
                     });
                 });
-                const cuUser = firestore().collection('Users').doc('ABC').get();
-                cuUser.then();
                 setIInviteUsers(items);
             });
 
@@ -129,8 +116,7 @@ export const HomeScreen = ({navigation}: Props) => {
                 setSelectedItem({data: waitingInvite});
                 if (waitingInvite?.waitingAuthor + waitingInvite?.waitingUser === 2) {
                     setModalVisible(false);
-                    userRef.update('iAmReady', false).then(() => {
-                        console.log('===============================\n',Platform.OS,'\n===================================')
+                    userRef.update(firestoreFields.I_AM_READY, false).then(() => {
                         subscriber();
                         navigation.navigate('GameScreen', {initInvite: waitingInvite, inviteRef: clickInviteRef});
                     });
@@ -141,7 +127,7 @@ export const HomeScreen = ({navigation}: Props) => {
     const handleItemClick = (item: { key: string, data: any }) => {
             setSelectedItem(item);
             if (item.data.authorRef) {
-                const clickInviteRef = firestore().collection('invites').doc(item.key);
+                const clickInviteRef = firestore().collection(firestoreCollections.INVITES).doc(item.key);
                 if (clickInviteRef !== undefined) {
                     listenInvite(clickInviteRef);
                     const waitingField = item?.data?.authorRef?.id === userRef?.id ? waitingAuthor : waitingUser;
@@ -168,7 +154,7 @@ export const HomeScreen = ({navigation}: Props) => {
     };
 
     const inviteUser = () => {
-        const addInviteRef = firestore().collection('invites').doc();
+        const addInviteRef = firestore().collection(firestoreCollections.INVITES).doc();
         addInviteRef.set({
             loserRef: null,
             waitingAuthor: 1,
@@ -176,7 +162,7 @@ export const HomeScreen = ({navigation}: Props) => {
             authorRef: userRef,
             author: user,
             user: selectedItem?.data,
-            userRef: firestore().collection('users').doc(selectedItem.key),
+            userRef: firestore().collection(firestoreCollections.USERS).doc(selectedItem.key),
         }).then(() => {
             setInviteRef(addInviteRef);
             listenInvite(addInviteRef);
@@ -205,7 +191,8 @@ export const HomeScreen = ({navigation}: Props) => {
         >
             <View style={Styles.centeredView}>
                 <View style={Styles.modalView}>
-                    <Text style={Styles.modalText}>{I18n.t('game.' + action)} {name} {action === invite ? '?' : ''}</Text>
+                    <Text
+                        style={Styles.modalText}>{I18n.t('game.' + action)} {name} {action === invite ? '?' : ''}</Text>
                     {action === invite && (<Pressable
                         style={[Styles.button, Styles.buttonConfirm]}
                         onPress={inviteUser}>
