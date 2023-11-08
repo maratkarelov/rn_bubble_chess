@@ -5,7 +5,7 @@ import auth from '@react-native-firebase/auth';
 import I18n from '../../locales/i18n';
 import Styles from '../profile/styles';
 import firestore from '@react-native-firebase/firestore';
-import {firestoreCollections} from "../../constants/firestore";
+import {firestoreCollections, firestoreFields} from "../../constants/firestore";
 
 interface Props extends StackScreenProps<any, any> {
 }
@@ -36,7 +36,7 @@ export const ProfileScreen = ({navigation}: Props) => {
 
     async function readDbUser() {
         const userDocumentSnapshot = await firestore().collection(firestoreCollections.USERS).doc(userFb?.uid).get();
-        setName(userDocumentSnapshot.data()['name'])
+        setName(userDocumentSnapshot.data()[firestoreFields.NAME])
 
     }
     readDbUser().then(() => {});

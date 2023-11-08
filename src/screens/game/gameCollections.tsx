@@ -1,4 +1,4 @@
-export const myRoutes = [
+export const authorRoutes = [
     {
         key: 'a1_f',
         startAddress: 'a1',
@@ -80,7 +80,7 @@ export const myRoutes = [
         points: ['e2', 'd3', 'c4', 'b5', 'a6', 'b7', 'c8', 'd9', 'e10', 'f11', 'e12'],
     },
 ];
-export const playerRoutes = [
+export const userRoutes = [
     {
         key: 'a12_f',
         startAddress: 'a12',
@@ -162,19 +162,3 @@ export const playerRoutes = [
         points: ['e11', 'd10', 'c9', 'b8', 'a7', 'b6', 'c5', 'd4', 'e3', 'f2', 'e1'],
     },
 ];
-
-export const StartCapacity = [
-    {startAddress: 'a1', count: 6, live: true, myCapacity: true},
-    {startAddress: 'b1', count: 6, live: true, myCapacity: true},
-    {startAddress: 'c1', count: 6, live: true, myCapacity: true},
-    {startAddress: 'd1', count: 6, live: true, myCapacity: true},
-    {startAddress: 'e1', count: 6, live: true, myCapacity: true},
-    {startAddress: 'f1', count: 6, live: true, myCapacity: true},
-    {startAddress: 'a12', count: 6, live: true, myCapacity: false},
-    {startAddress: 'b12', count: 6, live: true, myCapacity: false},
-    {startAddress: 'c12', count: 6, live: true, myCapacity: false},
-    {startAddress: 'd12', count: 6, live: true, myCapacity: false},
-    {startAddress: 'e12', count: 6, live: true, myCapacity: false},
-    {startAddress: 'f12', count: 6, live: true, myCapacity: false},
-];
-

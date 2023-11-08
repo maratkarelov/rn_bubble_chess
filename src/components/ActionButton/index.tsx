@@ -3,6 +3,7 @@ import {Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {baseColor} from "../../theme/appTheme";
 import LoadingSpinner from "../LoadingSpinner";
 import Styles from "../ActionButton/styles";
+import {disableColor} from "../../tools/common";
 
 export default function ActionButton(
     props: {
@@ -14,11 +15,7 @@ export default function ActionButton(
         isLoading?: boolean
     }) {
     const {onPress, title} = props;
-    function disableColor(): string {
-        // coerce values so ti is between 0 and 1.
-        const _opacity = Math.round(Math.min(Math.max(0.5 || 1, 0), 1) * 255);
-        return props.backgroundColor + _opacity.toString(16).toUpperCase();
-    }
+
     const renderContent = () => {
         if (props.isLoading) {
             return <LoadingSpinner color={baseColor.gray_30} />;
@@ -29,7 +26,7 @@ export default function ActionButton(
         );
     };
     return (
-        <TouchableOpacity style={[Styles.button, {backgroundColor: props.disable ? disableColor() : props.backgroundColor ?? baseColor.sky}]} onPress={onPress}
+        <TouchableOpacity style={[Styles.button, {backgroundColor: props.disable ? disableColor(props.backgroundColor ?? baseColor.sky) : props.backgroundColor ?? baseColor.sky}]} onPress={onPress}
                           disabled={props.disable || props.isLoading}>
             {renderContent()}
         </TouchableOpacity>

@@ -59,6 +59,13 @@ export default StyleSheet.create({
     modalText: {
         marginBottom: 15,
         textAlign: 'center',
+    },
+    counterText:{
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        color: baseColor.black,
+        fontSize: 20,
     }
 });
 

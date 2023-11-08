@@ -1,7 +1,6 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
 import {
-    Alert,
     BackHandler,
     ColorValue,
     Dimensions,
@@ -16,11 +15,12 @@ import Styles from '../game/styles';
 import {baseColor} from '../../theme/appTheme';
 import {IconBack, IconFire, Swordman, Tower} from '../../svg';
 import ActionButton from '../../components/ActionButton';
-import {myRoutes, playerRoutes, StartCapacity} from '../game/gameCollections';
+import {authorRoutes, userRoutes} from '../game/gameCollections';
 import I18n from '../../locales/i18n';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import {firestoreCollections, firestoreFields} from '../../constants/firestore';
+import {useInterval} from 'react-interval-hook';
 
 interface Props extends StackScreenProps<any, any> {
 }
@@ -40,7 +40,7 @@ interface Capacity {
 
 interface Launch {
     health: number,
-    myLaunch: boolean;
+    directionToTop: boolean;
     timer: number;
     points: string[];
     currentAddress: string;
@@ -53,29 +53,33 @@ interface Explosion {
     timer: number
 }
 
+let remoteOpponentCounter = 0;
+let handleMyLaunchCounter = 0;
+
 export const GameScreen = ({route, navigation}: Props) => {
-        const {initInvite, inviteRef} = route.params;
         const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
-        const timer = 50;
-        const moveSteps = 100;
+        const pointMovingInterval = 1000;
+        const moveSteps = 10;
         const launchCellRatio = 5;
         const explosionSteps = 5;
-        const [invite, setInvite] = useState(initInvite);
+        const [inviteRef, setInviteRef] = useState<any | undefined>();
+        const [invite, setInvite] = useState<any | undefined>();
         const [startAddress, setStartAddress] = useState<string | undefined>(undefined);
         const [endAddress, setEndAddress] = useState<string | undefined>(undefined);
         const [currentRoute, setCurrentRoute] = useState<Route | undefined>(undefined);
         const [availableRoutes, setAvailableRoutes] = useState<Route[]>([]);
         const [launches, setLaunches] = useState<Launch[]>([]);
         const [explosions, setExplosions] = useState<Explosion[]>([]);
-        const startCapacities = [...StartCapacity];
-        const [capacities, setCapacities] = useState<Capacity[]>(startCapacities);
-        const [timeLeft, setTimeLeft] = useState(1000000000000);
+        const [capacities, setCapacities] = useState<Capacity[]>([]);
+        const [step, setStep] = useState(0);
         const [readyForMyLaunch, setReadyForMyLaunch] = useState(false);
-        const [readyForHisLaunch, setReadyForHisLaunch] = useState(true);
+        const [readyForHisLaunch, setReadyForHisLaunch] = useState(false);
         const [gameResult, setGameResult] = useState<boolean | undefined>(undefined);
+        const [waitingOpponentReadMyStep, setWaitingOpponentReadMyStep] = useState<boolean | undefined>(undefined);
         const [modalVisible, setModalVisible] = useState(false);
         const uid = auth().currentUser?.uid;
         const userRef = firestore().collection(firestoreCollections.USERS).doc(uid);
+        const stepIds: any[] = [];
 
         var Sound = require('react-native-sound');
         // Enable playback in silence mode
@@ -98,37 +102,89 @@ export const GameScreen = ({route, navigation}: Props) => {
         const cellSize = boardWidth / 6;
 
         const refillCapacities = () => {
-            const newCapacities = [{startAddress: 'a1', count: 6, live: true, myCapacity: true},
-                {startAddress: 'b1', count: 6, live: true, myCapacity: true},
-                {startAddress: 'c1', count: 6, live: true, myCapacity: true},
-                {startAddress: 'd1', count: 6, live: true, myCapacity: true},
-                {startAddress: 'e1', count: 6, live: true, myCapacity: true},
-                {startAddress: 'f1', count: 6, live: true, myCapacity: true},
-                {startAddress: 'a12', count: 6, live: true, myCapacity: false},
-                {startAddress: 'b12', count: 6, live: true, myCapacity: false},
-                {startAddress: 'c12', count: 6, live: true, myCapacity: false},
-                {startAddress: 'd12', count: 6, live: true, myCapacity: false},
-                {startAddress: 'e12', count: 6, live: true, myCapacity: false},
-                {startAddress: 'f12', count: 6, live: true, myCapacity: false}];
+            const iAmAuthor = invite === undefined || invite?.authorRef.id === userRef.id;
+            const newCapacities = [
+                {startAddress: 'a1', count: 6, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'b1', count: 6, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'c1', count: 6, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'd1', count: 6, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'e1', count: 6, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'f1', count: 6, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'a12', count: 6, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'b12', count: 6, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'c12', count: 6, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'd12', count: 6, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'e12', count: 6, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'f12', count: 6, live: true, myCapacity: !iAmAuthor}];
             setCapacities(newCapacities);
+            // console.log(Platform.OS, 'newCapacities', newCapacities);
 
         };
 
         function listenInvite() {
-            inviteRef
-                .onSnapshot((querySnapshot: { data: () => any; }) => {
-                    const queryInvite = querySnapshot.data();
-                    if (queryInvite?.loserRef && queryInvite?.loserRef?.id !== userRef.id) {
-                        // opponent gave up
-                        setInvite(queryInvite);
-                        setModalVisible(true);
-                    }
+            const opponentStepsSubscriber = inviteRef?.collection(firestoreCollections.STEPS)
+                .where(firestoreFields.PLAYER_REF, '!=', userRef)
+                .where(firestoreFields.READ, '==', false)
+                .onSnapshot({
+                    error: (e: Error) => console.log('*****************', e),
+                    next: (querySnapshot: any[]) => {
+                        const batch = firestore().batch();
+                        querySnapshot?.forEach(documentSnapshot => {
+                            const stepIdsLocal: any[] = [];
+                            if (stepIds.find((id) => (id === documentSnapshot.ref.id)) === undefined && stepIdsLocal.find((id) => (id === documentSnapshot.ref.id)) === undefined) {
+                                batch.update(documentSnapshot.ref, firestoreFields.READ, true);
+                                const opponentStep = documentSnapshot.data();
+                                stepIdsLocal.push([documentSnapshot.ref.id]);
+                                stepIds.push([documentSnapshot.ref.id]);
+                                remoteOpponentCounter++;
+                                console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'line 158 remoteOpponentCounter', remoteOpponentCounter, Date());
+                                launch(opponentStep.route, opponentStep.end, false);
+                            }
+                        });
+                        return batch.commit();
+                    },
                 });
+            const myStepsSubscriber = inviteRef?.collection(firestoreCollections.STEPS)
+                .where(firestoreFields.PLAYER_REF, '==', userRef)
+                .where(firestoreFields.READ, '==', false)
+                .onSnapshot({
+                    error: (e: Error) => console.log('*****************', e),
+                    next: (querySnapshot: any[]) => {
+                        setWaitingOpponentReadMyStep(querySnapshot.length > 0);
+                    },
+                });
+            // let opponentStepsSubscriber = inviteRef
+            //     .onSnapshot({
+            //         error: (e: Error) => console.log('*****************', e),
+            //         next: (querySnapshot: any[]) => {
+            //             const queryInvite = querySnapshot.data();
+            //             setInvite(queryInvite);
+            //             if (queryInvite?.loserRef && queryInvite?.loserRef?.id !== userRef.id) {
+            //                 // opponent gave up
+            //                 setModalVisible(true);
+            //             }
+            //             const userField = queryInvite?.userRef.id === userRef.id ? firestoreFields.STEP_AUTHOR : firestoreFields.STEP_USER;
+            //             const opponentStep = queryInvite[userField];
+            //             if (opponentStep) {
+            //                 remoteOpponentCounter++;
+            //                 console.log(invite?.userRef.id === userRef.id ? invite?.author.name : invite?.user.name, 'line 158 remoteOpponentCounter', remoteOpponentCounter, Date());
+            //                 launch(opponentStep.route, opponentStep.start, opponentStep.end, false);
+            //                 inviteRef.update(userField, null);
+            //             }
+            //         },
+            //     });
+            return () => {
+                opponentStepsSubscriber();
+                myStepsSubscriber();
+            };
         }
 
         useEffect(() => {
+            remoteOpponentCounter = 0;
+            handleMyLaunchCounter = 0;
             refillCapacities();
             listenInvite();
+            setReadyForHisLaunch(true)
             const backAction = () => {
                 setModalVisible(true);
                 return true;
@@ -144,46 +200,46 @@ export const GameScreen = ({route, navigation}: Props) => {
         }, []);
 
         const checkNewExplosion = (address: string) => {
-            const myTower = launches.find((item) => (item.currentAddress === address && item.myLaunch && item.currentAddress === item.endAddress));
-            const myLaunch = launches.find((item) => (item.currentAddress === address && item.myLaunch && item.currentAddress !== item.endAddress));
-            const hisTower = launches.find((item) => (item.currentAddress === address && !item.myLaunch && item.currentAddress === item.endAddress));
-            const hisLaunch = launches.find((item) => (item.currentAddress === address && !item.myLaunch && item.currentAddress !== item.endAddress));
-            if (myTower !== undefined && hisLaunch !== undefined) {
-                if (myTower.health === 2) {
-                    myTower.health = 1;
-                    const newLaunches = launches.filter((l) => l !== hisLaunch);
+            const bottomPlayerTower = launches.find((item) => (item.currentAddress === address && item.directionToTop && item.currentAddress === item.endAddress));
+            const bottomPlayerLaunch = launches.find((item) => (item.currentAddress === address && item.directionToTop && item.currentAddress !== item.endAddress));
+            const topPlayerTower = launches.find((item) => (item.currentAddress === address && !item.directionToTop && item.currentAddress === item.endAddress));
+            const topPlayerLaunch = launches.find((item) => (item.currentAddress === address && !item.directionToTop && item.currentAddress !== item.endAddress));
+            if (bottomPlayerTower !== undefined && topPlayerLaunch !== undefined) {
+                if (bottomPlayerTower.health === 2) {
+                    bottomPlayerTower.health = 1;
+                    const newLaunches = launches.filter((l) => l !== topPlayerLaunch);
                     setLaunches(newLaunches);
                     playSound('armor');
                 } else {
                     playSound('blaster');
-                    setLaunches(launches.filter((l) => l !== hisLaunch && l !== myTower));
+                    setLaunches(launches.filter((l) => l !== topPlayerLaunch && l !== bottomPlayerTower));
                 }
                 newExplosion(address);
-            } else if (myLaunch !== undefined && hisTower !== undefined) {
-                if (hisTower.health === 2) {
-                    hisTower.health = 1;
-                    setLaunches(launches.filter((l) => l !== myLaunch));
+            } else if (bottomPlayerLaunch !== undefined && topPlayerTower !== undefined) {
+                if (topPlayerTower.health === 2) {
+                    topPlayerTower.health = 1;
+                    setLaunches(launches.filter((l) => l !== bottomPlayerLaunch));
                     playSound('armor');
                 } else {
                     playSound('blaster');
-                    setLaunches(launches.filter((l) => l !== hisTower && l !== myLaunch));
+                    setLaunches(launches.filter((l) => l !== topPlayerTower && l !== bottomPlayerLaunch));
                 }
                 newExplosion(address);
-            } else if (myLaunch !== undefined && hisLaunch !== undefined) {
-                setLaunches(launches.filter((item) => item !== myLaunch && item !== hisLaunch));
+            } else if (bottomPlayerLaunch !== undefined && topPlayerLaunch !== undefined) {
+                setLaunches(launches.filter((item) => item !== bottomPlayerLaunch && item !== topPlayerLaunch));
                 playSound('blaster');
                 newExplosion(address);
-            } else if (myTower !== undefined && hisTower !== undefined) {
-                if (hisTower.health === 2) {
-                    hisTower.health = 1;
-                    setLaunches(launches.filter((l) => l !== myTower));
+            } else if (bottomPlayerTower !== undefined && topPlayerTower !== undefined) {
+                if (topPlayerTower.health === 2) {
+                    topPlayerTower.health = 1;
+                    setLaunches(launches.filter((l) => l !== bottomPlayerTower));
                     playSound('armor');
-                } else if (myTower.health === 2) {
-                    myTower.health = 1;
-                    setLaunches(launches.filter((l) => l !== hisTower));
+                } else if (bottomPlayerTower.health === 2) {
+                    bottomPlayerTower.health = 1;
+                    setLaunches(launches.filter((l) => l !== topPlayerTower));
                     playSound('armor');
-                } else if (myTower.health === hisTower.health) {
-                    setLaunches(launches.filter((l) => l !== hisTower && l !== myTower));
+                } else if (bottomPlayerTower.health === topPlayerTower.health) {
+                    setLaunches(launches.filter((l) => l !== topPlayerTower && l !== bottomPlayerTower));
                     playSound('blaster');
                 }
                 newExplosion(address);
@@ -192,31 +248,33 @@ export const GameScreen = ({route, navigation}: Props) => {
         };
 
         const newExplosion = (address: string) => {
-            const newExplosion: Explosion = {
+            const addExplosion: Explosion = {
                 address: address,
                 timer: explosionSteps,
             };
-            setExplosions(explosions => [...explosions, newExplosion]);
+            setExplosions(() => [...explosions, addExplosion]);
 
         };
+        useInterval(() => {
+            setStep(step + 1);
+        }, pointMovingInterval);
 
         useEffect(() => {
                 // exit early when we reach 0
                 if (gameResult !== undefined) {
                     return;
                 }
-                let capacityUpdated = false;
-                let launchUpdated = false;
+                let gameOver = false;
                 launches.map((launch) => {
                     let capacity = capacities.find((item) => item.startAddress === launch.currentAddress);
                     if (capacity?.live) {
-                        capacityUpdated = true;
+                        gameOver = true;
                         capacity.live = false;
                     }
-                    if (launch.timer >= 1) {
-                        launchUpdated = true;
+                    if (launch.timer > 0) {
                         if (launch.timer === 1) {
                             if (launch.points.length > 0) {
+                                // console.log(Platform.OS, 'line 247 new cell', Date())
                                 launch.currentAddress = launch.points[0];
                                 launch.points = launch.points.slice(1);
                                 launch.timer = moveSteps;
@@ -226,48 +284,30 @@ export const GameScreen = ({route, navigation}: Props) => {
                                 launch.timer = 0;
                             }
                         } else {
+                            // console.log(Platform.OS, 'line 253', Date())
                             launch.timer = launch.timer - 1;
                         }
                     }
                 });
-                let explosionsUpdated = false;
-                explosions.map((item) => {
+                setLaunches(launches);
+                explosions.forEach((item) => {
                     if (item.timer > 0) {
                         item.timer = item.timer - 1;
-                        explosionsUpdated = true;
                     } else {
                         setExplosions(explosions.filter((value) => value.timer > 0));
                     }
                 });
-                if (explosionsUpdated) {
-                    setExplosions(explosions);
-                }
-                if (capacityUpdated) {
+                if (gameOver) {
                     const value = capacities.find((item) => !item.live);
                     setGameResult(!value?.myCapacity);
+                    const inviteField = value?.myCapacity ? firestoreFields.LOSER_REF : firestoreFields.WINNER_REF;
                     if (value?.myCapacity) {
-                        firestore().collection(firestoreCollections.INVITES).doc(invite.key).update(firestoreFields.LOSER_REF, userRef);
+                        inviteRef?.update(inviteField, userRef);
                     }
-
-                    setCapacities(capacities);
                     playSound(value?.myCapacity ? 'lose' : 'win');
 
                 }
-                if (launchUpdated) {
-                    setLaunches(launches);
-                }
-
-                // save intervalId to clear the interval when the
-                // component re-renders
-                const intervalId = setInterval(() => {
-                    setTimeLeft(timeLeft - 1);
-                }, timer);
-
-                // clear interval on re-render to avoid memory leaks
-                return () => clearInterval(intervalId);
-                // add timeLeft as a dependency to re-rerun the effect
-                // when we update it
-            }, [capacities, launches, timeLeft]
+            }, [step, capacities, explosions, launches]
         );
 
         useEffect(() => {
@@ -277,16 +317,17 @@ export const GameScreen = ({route, navigation}: Props) => {
                         const max = 15;
                         const min = 1;
                         const secondsToPlay = Math.floor(Math.random() * (max - min + 1) + min);
+                        console.log('secondsToPlay', secondsToPlay);
                         const timeout = setTimeout(() => {
                             const rCapacityIndex = Math.floor(Math.random() * availableCapacities.length);
                             const capacity = availableCapacities[rCapacityIndex];
-                            const liveFillRoutes = playerRoutes.filter((item) => item.startAddress === capacity.startAddress);
+                            const liveFillRoutes = userRoutes.filter((item) => item.startAddress === capacity.startAddress);
                             const rRouteIndex = Math.floor(Math.random() * liveFillRoutes.length);
                             const route = liveFillRoutes[rRouteIndex];
-                            if (route.points !== undefined) {
+                            if (route?.points !== undefined) {
                                 const rEndIndex = Math.floor(Math.random() * route.points.length);
                                 const end = route.points[rEndIndex];
-                                launch(route, route.startAddress, end, false);
+                                launch(route, end, false);
                                 setReadyForHisLaunch(true);
                             }
                         }, secondsToPlay * 1000);
@@ -300,7 +341,6 @@ export const GameScreen = ({route, navigation}: Props) => {
         const newGame = () => {
             setReadyForMyLaunch(false);
             setGameResult(undefined);
-            setReadyForHisLaunch(true);
             refillCapacities();
             setCurrentRoute(undefined);
             setStartAddress(undefined);
@@ -309,30 +349,69 @@ export const GameScreen = ({route, navigation}: Props) => {
             setAvailableRoutes([]);
         };
 
-        const handleMyLaunch = (route: Route | undefined, start: string | undefined, end: string | undefined) => {
-            setReadyForMyLaunch(false);
-            // firestore().collection(firestoreCollections.INVITES).
-            launch(route, start, end, true);
-        };
+        const handleMyLaunch = (launchRoute: Route | undefined, end: string | undefined) => {
+                handleMyLaunchCounter++;
+                console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'line 343 handleMyLaunch', handleMyLaunchCounter, Date());
+                setReadyForMyLaunch(false);
+                if (inviteRef) {
+                    const stepRef = inviteRef.collection(firestoreCollections.STEPS).doc();
+                    return firestore().runTransaction(async transaction => {
+                            const currentCapacityAddress = launchRoute?.startAddress;
+                            const inviteSnapshot = await transaction.get(inviteRef);
+                            if (!inviteSnapshot.exists) {
+                                throw 'Post does not exist!';
+                            }
+                            const currentCapacityValue = inviteSnapshot.data()[currentCapacityAddress];
+                            if (currentCapacityValue > 0) {
+                                transaction.set(stepRef, {
+                                    [firestoreFields.PLAYER_REF]: userRef,
+                                    [firestoreFields.READ]: false,
+                                    date: Date(),
+                                    route: launchRoute,
+                                    end: end,
+                                });
 
-        const launch = (route: Route | undefined, start: string | undefined, end: string | undefined, myLaunch: boolean) => {
-            if (start !== undefined && end !== undefined && route?.points !== undefined) {
-                const endIndex = route?.points.indexOf(end);
+                                transaction.update(inviteRef, {[currentCapacityAddress]: currentCapacityValue - 1});
+                            }
+
+                        }
+                    ).then(() => launch(launchRoute, end, true));
+                } else {
+                    launch(launchRoute, end, true);
+                }
+                // inviteRef.collection(firestoreCollections.STEPS).add(
+                //     {
+                //         [firestoreFields.PLAYER_REF]: userRef,
+                //         [firestoreFields.READ]: false,
+                //         date: Date(),
+                //         route: launchRoute,
+                //         end: end,
+                //
+                //     }).then(() => launch(launchRoute, end, true));
+            }
+        ;
+
+        const launch = (launchRoute: Route | undefined, end: string | undefined, myLaunch: boolean) => {
+            // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, launchRoute, end);
+            if (launchRoute?.startAddress !== undefined && end !== undefined && launchRoute?.points !== undefined) {
+                const endIndex = launchRoute?.points.indexOf(end);
                 if (endIndex !== undefined) {
-                    const currentCapacity = capacities.find((item) => item.startAddress === start);
+                    const currentCapacity = capacities.find((item) => item.startAddress === launchRoute.startAddress);
                     if (currentCapacity !== undefined) {
                         currentCapacity.count = currentCapacity.count - 1;
                     }
-                    setCapacities(capacities);
+                    // setCapacities(capacities);
                     const newLaunch: Launch = {
                         health: 1,
-                        myLaunch: myLaunch,
+                        directionToTop: invite === undefined ? myLaunch : (invite.authorRef.id === userRef.id && myLaunch) || (invite.userRef.id === userRef.id && !myLaunch),
                         timer: moveSteps,
-                        currentAddress: route?.points[0],
-                        points: route?.points.slice(1, endIndex + 1),
+                        currentAddress: launchRoute?.points[0],
+                        points: launchRoute?.points.slice(1, endIndex + 1),
                         endAddress: end,
                     };
-                    setLaunches(launches => [...launches, newLaunch]);
+                    launches.push(newLaunch);
+                    // console.log(Platform.OS, 'line 370\n', launches.length +' launches','\n' , launches,'\n new launch ' ,newLaunch);
+                    // setLaunches(items => [...items, newLaunch]);
                     if (myLaunch) {
                         setCurrentRoute(undefined);
                         setStartAddress(undefined);
@@ -343,15 +422,18 @@ export const GameScreen = ({route, navigation}: Props) => {
             }
         };
 
+// console.log(Platform.OS, ' 389 : launches count', launches.length);
+
         function getItem(selectedAddress: string) {
-            const isStartCell = myRoutes.find((route) => (route.startAddress === selectedAddress)) !== undefined;
+            const routes = invite === undefined || invite.authorRef.id === userRef.id ? authorRoutes : userRoutes;
+            const isStartCell = routes.find((route) => (route.startAddress === selectedAddress)) !== undefined;
             if (isStartCell) {
                 //click start line point
                 if (selectedAddress === startAddress) {
                     setStartAddress(undefined);
                     setAvailableRoutes([]);
                 } else {
-                    const newAvailableRoutes = myRoutes.filter((item) => {
+                    const newAvailableRoutes = routes.filter((item) => {
                         return item.startAddress === selectedAddress;
                     });
                     setStartAddress(selectedAddress);
@@ -392,6 +474,8 @@ export const GameScreen = ({route, navigation}: Props) => {
             }
         }
 
+// console.log('steps',invite.stepUser, invite.stepAuthor)
+
         useEffect(() => {
             navigation.setOptions({
                 headerShown: true,
@@ -405,28 +489,33 @@ export const GameScreen = ({route, navigation}: Props) => {
                 ),
                 headerRight: () => ((readyForMyLaunch || gameResult !== undefined) &&
                     <ActionButton
-                        isLoading={false}
-                        disable={false}
-                        onPress={() => gameResult !== undefined ? newGame() : handleMyLaunch(currentRoute, startAddress, endAddress)}
+                        isLoading={waitingOpponentReadMyStep}
+                        disable={waitingOpponentReadMyStep}
+                        onPress={() => gameResult !== undefined ? newGame() : handleMyLaunch(currentRoute, endAddress)}
                         title={I18n.t(gameResult !== undefined ? 'game.reply' : 'game.go')}
                     />
                 ),
             });
-        }, [readyForMyLaunch, gameResult, currentRoute, endAddress, navigation, startAddress]);
+        }, [readyForMyLaunch, gameResult, currentRoute, endAddress, navigation]);
 
+        // console.log('readyForMyLaunch', readyForMyLaunch)
         function exitGame() {
-            const inviteField = invite.loserRef ? firestoreFields.WINNER_REF : firestoreFields.LOSER_REF;
-            inviteRef.update(inviteField, userRef).then(() => {
-                const userField = invite.loserRef ? firestoreFields.WINS : firestoreFields.LOSES;
-                const prevCount = invite.userRef.id === userRef.id ? invite.user[userField] : invite.author[userField];
-                userRef.update({
-                    [firestoreFields.I_AM_READY]: true,
-                    [userField]: (prevCount ?? 0) + 1,
-                })
-                    .then(() => {
-                        navigation.navigate('HomeScreen');
-                    });
-            });
+            if (invite) {
+                const inviteField = invite.loserRef ? firestoreFields.WINNER_REF : firestoreFields.LOSER_REF;
+                inviteRef.update(inviteField, userRef).then(() => {
+                    const userField = invite.loserRef ? firestoreFields.WINS : firestoreFields.LOSES;
+                    const prevCount = invite.userRef.id === userRef.id ? invite.user[userField] : invite.author[userField];
+                    userRef.update({
+                        [firestoreFields.I_AM_READY]: true,
+                        [userField]: (prevCount ?? 0) + 1,
+                    })
+                        .then(() => {
+                            navigation.navigate('HomeScreen');
+                        });
+                });
+            } else {
+                navigation.navigate('HomeScreen');
+            }
         }
 
         const renderDialog = () => {
@@ -442,7 +531,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                         <Pressable
                             style={[Styles.button, Styles.buttonOpen]}
                             onPress={() => exitGame()}>
-                            <Text style={Styles.textStyle}>{I18n.t(invite.loserRef ? 'i_see' : 'ok')}</Text>
+                            <Text style={Styles.textStyle}>{I18n.t(invite?.loserRef ? 'i_see' : 'ok')}</Text>
                         </Pressable>
                         {invite?.loserRef === null && <Pressable
                             style={[Styles.button, Styles.buttonClose]}
@@ -460,7 +549,7 @@ export const GameScreen = ({route, navigation}: Props) => {
             const nextLetter = movingLaunch?.points[0]?.substring(0, 1);
             const launchRadius = cellSize / (2 * launchCellRatio);
             const launchProgress = movingLaunch.timer / moveSteps;
-            let topOffset = movingLaunch.myLaunch ? (cellSize * launchProgress - launchRadius) : (cellSize * (1 - launchProgress) - launchRadius);
+            let topOffset = movingLaunch.directionToTop ? (cellSize * launchProgress - launchRadius) : (cellSize * (1 - launchProgress) - launchRadius);
             const leftDirectionOffset = cellSize * launchProgress - launchRadius;
             const rightDirectionOffset = cellSize * (1 - launchProgress) - launchRadius;
             let leftOffset = letter === nextLetter ? (cellSize / 2 - launchRadius) : letter === 'a' && movingLaunch.timer < moveSteps / 2 || letter === 'f' && movingLaunch.timer > moveSteps / 2 ? rightDirectionOffset : (letter === 'a' && movingLaunch.timer > moveSteps / 2 || letter === 'f' && movingLaunch.timer < moveSteps / 2 ? leftDirectionOffset : (address > nextLetter ? leftDirectionOffset : rightDirectionOffset));
@@ -469,7 +558,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                     borderRadius: cellSize / launchCellRatio,
                     width: cellSize / launchCellRatio,
                     height: cellSize / launchCellRatio,
-                    backgroundColor: movingLaunch.myLaunch ? baseColor.sky : baseColor.pink,
+                    backgroundColor: movingLaunch.directionToTop ? baseColor.sky : baseColor.pink,
                     position: 'absolute',
                     left: leftOffset,
                     top: topOffset,
@@ -491,13 +580,11 @@ export const GameScreen = ({route, navigation}: Props) => {
                         left: 0,
                         top: 0,
                     }}>
-                    {containsTower !== undefined && (
-                        <Tower fill={containsTower.myLaunch ? baseColor.sky : baseColor.pink}/>)
+                    {containsTower !== undefined &&
+                        <Tower fill={containsTower.directionToTop ? baseColor.sky : baseColor.pink}/>
                     }
-                    {containsTower !== undefined && (
-                        <Text> {containsTower.health}</Text>)
-                    }
-                    {(movingLaunches.map((item) => renderLaunch(address, item)))}
+                    {containsTower !== undefined && <Text> {containsTower.health}</Text>}
+                    {movingLaunches.map((item) => renderLaunch(address, item))}
                 </View>;
             }
         };
@@ -505,8 +592,9 @@ export const GameScreen = ({route, navigation}: Props) => {
         const renderPoint = (address: string, isStartAddress: boolean, color: ColorValue, showCounter: boolean) => {
             const cellSizeWithPadding = (isStartAddress ? cellSize : cellSize / 2) * 0.5;
             const capacity = capacities.find((item) => item.startAddress === address);
+            // console.log('renderPoint',capacity)
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
-                {(<View
+                <View
                     style={{
                         borderRadius: cellSizeWithPadding,
                         width: cellSizeWithPadding,
@@ -517,29 +605,24 @@ export const GameScreen = ({route, navigation}: Props) => {
                         top: cellSize / 2 - (cellSizeWithPadding / 2),
                     }}
 
-                />)}
-                {showCounter && !capacity?.live && (<IconFire size={'80%'}/>)}
-                {showCounter && (<Text
-                    style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        right: 0,
-                        color: baseColor.black,
-                        fontSize: 20,
-                    }}>{capacity?.count}</Text>)}
+                />
+                {showCounter && !(capacity?.live ?? true) && <IconFire size={'80%'}/>}
+                {showCounter && <Text style={Styles.counterText}>{capacity?.count ?? '-'}</Text>}
             </View>;
 
         };
+// console.log(Platform.OS, capacities)
         const renderAvailableTower = () => {
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
-                <Tower fill={baseColor.blue}/>
+                <Tower fill={invite === undefined || invite.authorRef.id === userRef.id ? baseColor.blue : baseColor.red}/>
             </View>;
         };
 
         const renderSwordman = (address: string) => {
             const capacity = capacities.find((item) => item.startAddress === address);
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
-                <Swordman fill={baseColor.blue}/>
+                <Swordman
+                    fill={invite === undefined || invite.authorRef.id === userRef.id ? baseColor.blue : baseColor.red}/>
                 <Text
                     style={{
                         position: 'absolute',
@@ -578,7 +661,9 @@ export const GameScreen = ({route, navigation}: Props) => {
             const indexEnd = currentRoute?.points.indexOf(endAddress ?? '') ?? -1;
             const addressInCurrentRoute = indexAddr >= 0;
             const isSelectedCell = (currentRoute !== undefined && endAddress !== undefined && addressInCurrentRoute && indexAddr <= indexEnd) || address === startAddress;
-            const pointColor = isSelectedCell ? baseColor.sky : row === 11 ? baseColor.sky_50 : row === 0 && !isAvailableCell ? baseColor.pink : color === baseColor.wood_25 ? baseColor.gray_30 : baseColor.gray_50;
+            const unselectedPointColor = color === baseColor.wood_25 ? baseColor.gray_30 : baseColor.gray_50;
+            const selectedPointColor = invite === undefined || invite?.authorRef.id === userRef.id ? baseColor.sky : baseColor.pink;
+            const pointColor = isSelectedCell ? selectedPointColor : row === 11 && !isAvailableCell ? baseColor.sky_50 : row === 0 && !isAvailableCell ? baseColor.pink_50 : unselectedPointColor;
             return (<TouchableOpacity
                 style={{
                     backgroundColor: color,
@@ -592,7 +677,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                 {renderExplosion(address)}
                 {(row > 0 && row < 11) && renderLaunches(address)}
                 {(row > 0 && row < 11 && address === endAddress && renderAvailableTower())}
-                {(row === 0 && address === endAddress && renderSwordman(address))}
+                {((row === 0 || row === 11) && address === endAddress && renderSwordman(address))}
                 {(address !== endAddress && (isAvailableCell || row === 0 || row === 11)) &&
                     renderPoint(address, address === startAddress, pointColor, row === 0 || row === 11)}
             </TouchableOpacity>);

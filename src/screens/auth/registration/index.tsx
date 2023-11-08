@@ -16,7 +16,6 @@ interface Props extends StackScreenProps<any, any> {
 
 const RegistrationScreen = ({navigation}: Props) => {
     const [loading, setLoading] = useState(false);
-    const [modalVisible, setModalVisible] = useState(false);
     const [registerError, setRegisterError] = useState<string | undefined>(undefined);
 
     const handleRegister = () => {
