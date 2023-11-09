@@ -118,7 +118,7 @@ export const HomeScreen = ({navigation}: Props) => {
                     setModalVisible(false);
                     userRef.update(firestoreFields.I_AM_READY, false).then(() => {
                         subscriber();
-                        navigation.navigate('GameScreen', {initInvite: waitingInvite, inviteRef: clickInviteRef});
+                        navigation.navigate('GameScreen', {initInvite: waitingInvite, initInviteRef: clickInviteRef});
                     });
                 }
             });

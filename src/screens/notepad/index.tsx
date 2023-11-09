@@ -10,7 +10,7 @@ interface Props extends StackScreenProps<any, any> {
 }
 export const NotepadScreen = ({navigation}: Props) => {
     function newGame() {
-        navigation.navigate('GameScreen')
+        navigation.navigate('GameScreen', {initInvite: undefined, initInviteRef: undefined})
     }
     return (<View>
         <View style={Styles.training}>

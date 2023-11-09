@@ -57,13 +57,14 @@ let remoteOpponentCounter = 0;
 let handleMyLaunchCounter = 0;
 
 export const GameScreen = ({route, navigation}: Props) => {
+        const {initInvite, initInviteRef} = route.params;
         const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
-        const pointMovingInterval = 1000;
-        const moveSteps = 10;
+        const pointMovingInterval = 500;
+        const moveSteps = 20;
         const launchCellRatio = 5;
         const explosionSteps = 5;
-        const [inviteRef, setInviteRef] = useState<any | undefined>();
-        const [invite, setInvite] = useState<any | undefined>();
+        const [inviteRef, setInviteRef] = useState(initInviteRef);
+        const [invite, setInvite] = useState(initInvite);
         const [startAddress, setStartAddress] = useState<string | undefined>(undefined);
         const [endAddress, setEndAddress] = useState<string | undefined>(undefined);
         const [currentRoute, setCurrentRoute] = useState<Route | undefined>(undefined);
@@ -89,6 +90,8 @@ export const GameScreen = ({route, navigation}: Props) => {
         let {boardWidth, boardHeight} = {boardWidth: 0, boardHeight: 0};
         const efficientHeight = Platform.OS === 'ios' ? 0.85 : 0.9;
         const efficientWidth = Platform.OS === 'ios' ? 0.8 : 0.85;
+        const capacityCount = 6;
+        const timerRefillCapacity = 300;
         const ratio = height * efficientHeight / width;
         if (ratio > 2) {
             boardWidth = width;
@@ -103,20 +106,27 @@ export const GameScreen = ({route, navigation}: Props) => {
 
         const refillCapacities = () => {
             const iAmAuthor = invite === undefined || invite?.authorRef.id === userRef.id;
-            const newCapacities = [
-                {startAddress: 'a1', count: 6, live: true, myCapacity: iAmAuthor},
-                {startAddress: 'b1', count: 6, live: true, myCapacity: iAmAuthor},
-                {startAddress: 'c1', count: 6, live: true, myCapacity: iAmAuthor},
-                {startAddress: 'd1', count: 6, live: true, myCapacity: iAmAuthor},
-                {startAddress: 'e1', count: 6, live: true, myCapacity: iAmAuthor},
-                {startAddress: 'f1', count: 6, live: true, myCapacity: iAmAuthor},
-                {startAddress: 'a12', count: 6, live: true, myCapacity: !iAmAuthor},
-                {startAddress: 'b12', count: 6, live: true, myCapacity: !iAmAuthor},
-                {startAddress: 'c12', count: 6, live: true, myCapacity: !iAmAuthor},
-                {startAddress: 'd12', count: 6, live: true, myCapacity: !iAmAuthor},
-                {startAddress: 'e12', count: 6, live: true, myCapacity: !iAmAuthor},
-                {startAddress: 'f12', count: 6, live: true, myCapacity: !iAmAuthor}];
-            setCapacities(newCapacities);
+            if (capacities.length === 0) {
+                const newCapacities = [
+                    {startAddress: 'a1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                    {startAddress: 'b1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                    {startAddress: 'c1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                    {startAddress: 'd1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                    {startAddress: 'e1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                    {startAddress: 'f1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                    {startAddress: 'a12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                    {startAddress: 'b12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                    {startAddress: 'c12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                    {startAddress: 'd12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                    {startAddress: 'e12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                    {startAddress: 'f12', count: capacityCount, live: true, myCapacity: !iAmAuthor}];
+                setCapacities(newCapacities);
+            } else {
+                capacities.forEach((item) => {
+                    item.count = item.count + capacityCount;
+                });
+                setReadyForHisLaunch(!readyForHisLaunch)
+            }
             // console.log(Platform.OS, 'newCapacities', newCapacities);
 
         };
@@ -184,7 +194,7 @@ export const GameScreen = ({route, navigation}: Props) => {
             handleMyLaunchCounter = 0;
             refillCapacities();
             listenInvite();
-            setReadyForHisLaunch(true)
+            setReadyForHisLaunch(true);
             const backAction = () => {
                 setModalVisible(true);
                 return true;
@@ -257,6 +267,9 @@ export const GameScreen = ({route, navigation}: Props) => {
         };
         useInterval(() => {
             setStep(step + 1);
+            if (step > 0 && step % timerRefillCapacity === 0) {
+                refillCapacities();
+            }
         }, pointMovingInterval);
 
         useEffect(() => {
@@ -314,10 +327,9 @@ export const GameScreen = ({route, navigation}: Props) => {
                 if (capacities.find((item) => !item.live) === undefined) {
                     const availableCapacities = capacities.filter((item) => item.count > 0 && item.live && !item.myCapacity);
                     if (availableCapacities.length > 0) {
-                        const max = 15;
-                        const min = 1;
+                        const max = 0;
+                        const min = 10;
                         const secondsToPlay = Math.floor(Math.random() * (max - min + 1) + min);
-                        console.log('secondsToPlay', secondsToPlay);
                         const timeout = setTimeout(() => {
                             const rCapacityIndex = Math.floor(Math.random() * availableCapacities.length);
                             const capacity = availableCapacities[rCapacityIndex];
@@ -328,8 +340,8 @@ export const GameScreen = ({route, navigation}: Props) => {
                                 const rEndIndex = Math.floor(Math.random() * route.points.length);
                                 const end = route.points[rEndIndex];
                                 launch(route, end, false);
-                                setReadyForHisLaunch(true);
                             }
+                            setReadyForHisLaunch(true);
                         }, secondsToPlay * 1000);
                         setReadyForHisLaunch(false);
                         return () => clearTimeout(timeout);
@@ -480,7 +492,7 @@ export const GameScreen = ({route, navigation}: Props) => {
             navigation.setOptions({
                 headerShown: true,
                 headerBackTitle: '',
-                headerTitle: invite?.userRef.id === userRef.id ? invite?.author.name : invite?.user.name,
+                headerTitle: (invite ? invite?.userRef.id === userRef.id ? invite?.author.name : invite?.user.name : "") + I18n.t('game.reload') + (timerRefillCapacity - (step * pointMovingInterval / 1000) % timerRefillCapacity).toFixed(0),
                 headerLeft: () => (
                     <TouchableOpacity style={Styles.back}
                                       onPress={() => setModalVisible(true)}>
@@ -496,7 +508,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                     />
                 ),
             });
-        }, [readyForMyLaunch, gameResult, currentRoute, endAddress, navigation]);
+        }, [readyForMyLaunch, gameResult, currentRoute, endAddress, navigation, step]);
 
         // console.log('readyForMyLaunch', readyForMyLaunch)
         function exitGame() {
@@ -533,7 +545,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                             onPress={() => exitGame()}>
                             <Text style={Styles.textStyle}>{I18n.t(invite?.loserRef ? 'i_see' : 'ok')}</Text>
                         </Pressable>
-                        {invite?.loserRef === null && <Pressable
+                        {(invite === undefined || invite?.loserRef === null) && <Pressable
                             style={[Styles.button, Styles.buttonClose]}
                             onPress={() => setModalVisible(false)}>
                             <Text style={Styles.textStyle}>{I18n.t('cancel')}</Text>
@@ -543,6 +555,7 @@ export const GameScreen = ({route, navigation}: Props) => {
             </Modal>);
 
         };
+        // console.log('invite',invite)
 
         const renderLaunch = (address: string, movingLaunch: Launch) => {
             const letter = address.substring(0, 1);
@@ -568,10 +581,11 @@ export const GameScreen = ({route, navigation}: Props) => {
         };
 
         const renderLaunches = (address: string) => {
-            const containsTower = launches.find((item) => (item.currentAddress === address && item.points.length === 0));
+            const towers = launches.filter((item) => (item.currentAddress === address && item.points.length === 0));
+            const totalHealth = towers.reduce((a, b) => a + b.health, 0);
             const movingLaunches = launches.filter((item) => (item.currentAddress === address && item.points.length > 0));
             checkNewExplosion(address);
-            if (movingLaunches !== undefined || containsTower !== undefined) {
+            if (movingLaunches !== undefined || towers.length > 0) {
                 return <View
                     style={{
                         width: cellSize,
@@ -580,10 +594,10 @@ export const GameScreen = ({route, navigation}: Props) => {
                         left: 0,
                         top: 0,
                     }}>
-                    {containsTower !== undefined &&
-                        <Tower fill={containsTower.directionToTop ? baseColor.sky : baseColor.pink}/>
+                    {totalHealth > 0 &&
+                        <Tower fill={towers.find((item) => item.directionToTop) ? baseColor.sky : baseColor.pink}/>
                     }
-                    {containsTower !== undefined && <Text> {containsTower.health}</Text>}
+                    {totalHealth > 0 && <Text> {totalHealth}</Text>}
                     {movingLaunches.map((item) => renderLaunch(address, item))}
                 </View>;
             }
@@ -592,7 +606,6 @@ export const GameScreen = ({route, navigation}: Props) => {
         const renderPoint = (address: string, isStartAddress: boolean, color: ColorValue, showCounter: boolean) => {
             const cellSizeWithPadding = (isStartAddress ? cellSize : cellSize / 2) * 0.5;
             const capacity = capacities.find((item) => item.startAddress === address);
-            // console.log('renderPoint',capacity)
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
                 <View
                     style={{

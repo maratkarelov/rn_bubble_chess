@@ -30,6 +30,7 @@
     "label": "game",
     "reply": "reply",
     "go": "go",
+    "reload": "Пополнение через: ",
     "game_over_win": "Вы выиграли",
     "game_over_lose": "Вы проиграли"
   },
