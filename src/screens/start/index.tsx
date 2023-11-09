@@ -17,7 +17,7 @@ export const StartScreen = ({navigation}: Props) => {
     const {width, height} = Dimensions.get('window');
 
     function newGame() {
-        navigation.navigate('GameScreen')
+        navigation.navigate('GameScreen', {initInvite: undefined, initInviteRef: undefined})
     }
 
     function openAuth() {

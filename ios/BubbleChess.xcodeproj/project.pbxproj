@@ -11,6 +11,7 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		1476A3B62AFD6DA800F71DBD /* MaterialCommunityIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1476A3B52AFD6DA800F71DBD /* MaterialCommunityIcons.ttf */; };
 		149EF64B2AD1C83F000C4B2B /* blaster.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 149EF64A2AD1C83F000C4B2B /* blaster.mp3 */; };
 		149EF64D2AD1CDC1000C4B2B /* win.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 149EF64C2AD1CDC1000C4B2B /* win.mp3 */; };
 		149EF64F2AD1CFC5000C4B2B /* lose.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 149EF64E2AD1CFC5000C4B2B /* lose.mp3 */; };
@@ -27,6 +28,7 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = NavigationApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = NavigationApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = NavigationApp/main.m; sourceTree = "<group>"; };
+		1476A3B52AFD6DA800F71DBD /* MaterialCommunityIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = MaterialCommunityIcons.ttf; sourceTree = "<group>"; };
 		149EF64A2AD1C83F000C4B2B /* blaster.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = blaster.mp3; path = ../../../../Downloads/blaster.mp3; sourceTree = "<group>"; };
 		149EF64C2AD1CDC1000C4B2B /* win.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = win.mp3; path = ../../../../Downloads/win.mp3; sourceTree = "<group>"; };
 		149EF64E2AD1CFC5000C4B2B /* lose.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = lose.mp3; path = ../../../../Downloads/lose.mp3; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 		14FB51602AB494FA000A0A51 /* Fonts */ = {
 			isa = PBXGroup;
 			children = (
+				1476A3B52AFD6DA800F71DBD /* MaterialCommunityIcons.ttf */,
 				14DF0A392AEC4D870068AD97 /* terminator real nfi.ttf */,
 			);
 			name = Fonts;
@@ -197,6 +200,7 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				14DF0A3A2AEC4D870068AD97 /* terminator real nfi.ttf in Resources */,
 				149EF6512AD1F0CE000C4B2B /* armor.mp3 in Resources */,
+				1476A3B62AFD6DA800F71DBD /* MaterialCommunityIcons.ttf in Resources */,
 				14D4682A2AB1AF390086DED0 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

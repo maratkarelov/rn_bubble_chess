@@ -522,11 +522,11 @@ export const GameScreen = ({route, navigation}: Props) => {
                         [userField]: (prevCount ?? 0) + 1,
                     })
                         .then(() => {
-                            navigation.navigate('HomeScreen');
+                            navigation.goBack();
                         });
                 });
             } else {
-                navigation.navigate('HomeScreen');
+                navigation.goBack();
             }
         }
 

@@ -36,8 +36,7 @@ export const MainScreen = ({navigation}: Props) => {
                             tabBarLabel: I18n.t('notepad.label'),
                             tabBarIcon: ({color, size}) => (
                                 <MaterialCommunityIcons name="view-dashboard" color={color} size={size}/>
-                            ),
-                            tabBarBadge: 4,
+                            )
                         }}/>
             <Tab.Screen name="ProfileScreen"
                         component={ProfileScreen}
