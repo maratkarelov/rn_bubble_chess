@@ -156,14 +156,14 @@ export const HomeScreen = ({navigation}: Props) => {
     const inviteUser = () => {
         const addInviteRef = firestore().collection(firestoreCollections.INVITES).doc();
         addInviteRef.set({
-            date:Date(),
+            date: Date(),
             loserRef: null,
             waitingAuthor: 1,
             waitingUser: 0,
             authorRef: userRef,
             author: user,
             user: selectedItem?.data,
-            a1:6,b1:6,c1:6,d1:6,e1:6,f1:6,a12:6,b12:6,c12:6,d12:6,e12:6,f12:6,
+            a1: 6, b1: 6, c1: 6, d1: 6, e1: 6, f1: 6, a12: 6, b12: 6, c12: 6, d12: 6, e12: 6, f12: 6,
             userRef: firestore().collection(firestoreCollections.USERS).doc(selectedItem.key),
         }).then(() => {
             setInviteRef(addInviteRef);

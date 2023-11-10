@@ -17,7 +17,11 @@
     "create_account": "create account"
   },
   "home": {
-    "label": "Home"
+    "label": "Home",
+    "online": "online",
+    "i_invite": "i invite",
+    "me_invited": "me invited",
+    "new_game": "new game"
   },
   "game": {
     "label": "game",

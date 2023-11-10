@@ -26,7 +26,7 @@ export const MainScreen = ({navigation}: Props) => {
                         options={{
                             tabBarLabel: I18n.t('home.label'),
                             tabBarIcon: ({color, size}) => (
-                                <MaterialCommunityIcons name="view-dashboard" color={color} size={size}/>
+                                <MaterialCommunityIcons name="play-circle" color={color} size={size}/>
                             ),
                             tabBarBadge: 3,
                         }}/>
@@ -35,7 +35,7 @@ export const MainScreen = ({navigation}: Props) => {
                         options={{
                             tabBarLabel: I18n.t('notepad.label'),
                             tabBarIcon: ({color, size}) => (
-                                <MaterialCommunityIcons name="view-dashboard" color={color} size={size}/>
+                                <MaterialCommunityIcons name="clipboard-list-outline" color={color} size={size}/>
                             )
                         }}/>
             <Tab.Screen name="ProfileScreen"

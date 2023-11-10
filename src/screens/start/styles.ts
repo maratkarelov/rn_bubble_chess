@@ -11,6 +11,7 @@ export default  StyleSheet.create({
     },
 
     training:{
+        marginTop:50,
         position:'absolute',
         left:30,
         right:30,

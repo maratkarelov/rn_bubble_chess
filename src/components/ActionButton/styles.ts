@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import {StyleSheet} from 'react-native';
 
 export default StyleSheet.create({
     button: {
@@ -13,7 +13,7 @@ export default StyleSheet.create({
         fontFamily: 'copperplate',
         fontSize: 30,
         lineHeight: 30,
-        fontWeight: 'bold',
-        letterSpacing: 0.25
+        fontWeight: 'normal',
+        letterSpacing: 1
     },
 });

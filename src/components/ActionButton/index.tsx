@@ -18,16 +18,20 @@ export default function ActionButton(
 
     const renderContent = () => {
         if (props.isLoading) {
-            return <LoadingSpinner color={baseColor.gray_30} />;
+            return <LoadingSpinner color={baseColor.gray_30}/>;
         }
 
         return (
-            <Text style={[Styles.text, {color: props.textColor ?? baseColor.white}]}>{title}</Text>
+            <Text adjustsFontSizeToFit={true}
+                  numberOfLines={1}
+                  style={[Styles.text, {color: props.textColor ?? baseColor.white}]}>{title}</Text>
         );
     };
     return (
-        <TouchableOpacity style={[Styles.button, {backgroundColor: props.disable ? disableColor(props.backgroundColor ?? baseColor.sky) : props.backgroundColor ?? baseColor.sky}]} onPress={onPress}
-                          disabled={props.disable || props.isLoading}>
+        <TouchableOpacity
+            style={[Styles.button, {backgroundColor: props.disable ? disableColor(props.backgroundColor ?? baseColor.sky) : props.backgroundColor ?? baseColor.sky}]}
+            onPress={onPress}
+            disabled={props.disable || props.isLoading}>
             {renderContent()}
         </TouchableOpacity>
     );

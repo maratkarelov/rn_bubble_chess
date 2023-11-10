@@ -267,7 +267,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         };
         useInterval(() => {
             setStep(step + 1);
-            if (step > 0 && step % timerRefillCapacity === 0) {
+            if (step > 0 && (step * pointMovingInterval / 1000) % timerRefillCapacity === 0) {
                 refillCapacities();
             }
         }, pointMovingInterval);
@@ -351,6 +351,8 @@ export const GameScreen = ({route, navigation}: Props) => {
         );
 
         const newGame = () => {
+            setCapacities([]);
+            setStep(0);
             setReadyForMyLaunch(false);
             setGameResult(undefined);
             refillCapacities();
