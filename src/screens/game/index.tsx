@@ -59,6 +59,7 @@ let handleMyLaunchCounter = 0;
 export const GameScreen = ({route, navigation}: Props) => {
         const {initInvite, initInviteRef} = route.params;
         const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
+        const capacityCount = 6;
         const pointMovingInterval = 500;
         const moveSteps = 20;
         const launchCellRatio = 5;
@@ -71,15 +72,28 @@ export const GameScreen = ({route, navigation}: Props) => {
         const [availableRoutes, setAvailableRoutes] = useState<Route[]>([]);
         const [launches, setLaunches] = useState<Launch[]>([]);
         const [explosions, setExplosions] = useState<Explosion[]>([]);
-        const [capacities, setCapacities] = useState<Capacity[]>([]);
+        const uid = auth().currentUser?.uid;
+        const userRef = firestore().collection(firestoreCollections.USERS).doc(uid);
+        const iAmAuthor = initInvite === undefined || initInvite?.authorRef.id === userRef.id;
+        const [capacities, setCapacities] = useState<Capacity[]>([
+            {startAddress: 'a1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+            {startAddress: 'b1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+            {startAddress: 'c1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+            {startAddress: 'd1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+            {startAddress: 'e1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+            {startAddress: 'f1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+            {startAddress: 'a12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+            {startAddress: 'b12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+            {startAddress: 'c12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+            {startAddress: 'd12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+            {startAddress: 'e12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+            {startAddress: 'f12', count: capacityCount, live: true, myCapacity: !iAmAuthor}]);
         const [step, setStep] = useState(0);
         const [readyForMyLaunch, setReadyForMyLaunch] = useState(false);
         const [readyForHisLaunch, setReadyForHisLaunch] = useState(false);
         const [gameResult, setGameResult] = useState<boolean | undefined>(undefined);
         const [waitingOpponentReadMyStep, setWaitingOpponentReadMyStep] = useState<boolean | undefined>(undefined);
         const [modalVisible, setModalVisible] = useState(false);
-        const uid = auth().currentUser?.uid;
-        const userRef = firestore().collection(firestoreCollections.USERS).doc(uid);
         const stepIds: any[] = [];
 
         var Sound = require('react-native-sound');
@@ -90,8 +104,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         let {boardWidth, boardHeight} = {boardWidth: 0, boardHeight: 0};
         const efficientHeight = Platform.OS === 'ios' ? 0.85 : 0.9;
         const efficientWidth = Platform.OS === 'ios' ? 0.8 : 0.85;
-        const capacityCount = 6;
-        const timerRefillCapacity = 3000;
+        const timerRefillCapacity = 300;
         const ratio = height * efficientHeight / width;
         if (ratio > 2) {
             boardWidth = width;
@@ -105,32 +118,34 @@ export const GameScreen = ({route, navigation}: Props) => {
         const cellSize = boardWidth / 6;
         // console.log(invite)
 
-        const refillCapacities = () => {
-            const iAmAuthor = invite === undefined || invite?.authorRef.id === userRef.id;
-            if (capacities.length === 0) {
-                const newCapacities = [
-                    {startAddress: 'a1', count: capacityCount, live: true, myCapacity: iAmAuthor},
-                    {startAddress: 'b1', count: capacityCount, live: true, myCapacity: iAmAuthor},
-                    {startAddress: 'c1', count: capacityCount, live: true, myCapacity: iAmAuthor},
-                    {startAddress: 'd1', count: capacityCount, live: true, myCapacity: iAmAuthor},
-                    {startAddress: 'e1', count: capacityCount, live: true, myCapacity: iAmAuthor},
-                    {startAddress: 'f1', count: capacityCount, live: true, myCapacity: iAmAuthor},
-                    {startAddress: 'a12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
-                    {startAddress: 'b12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
-                    {startAddress: 'c12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
-                    {startAddress: 'd12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
-                    {startAddress: 'e12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
-                    {startAddress: 'f12', count: capacityCount, live: true, myCapacity: !iAmAuthor}];
-                setCapacities(newCapacities);
-            } else {
-                const editCapacities = inviteRef === undefined ? capacities : capacities.filter((item) => item.myCapacity !== iAmAuthor);
-                editCapacities.forEach((item) => {
-                    item.count = item.count + capacityCount;
-                });
+        const reloadMyCapacities = () => {
+            const editCapacities = inviteRef === undefined ? capacities : capacities.filter((item) => item.myCapacity);
+            editCapacities.forEach((item) => {
+                item.count = item.count + capacityCount;
+            });
+            if (inviteRef === undefined) {
                 setReadyForHisLaunch(!readyForHisLaunch);
+            } else {
+                return firestore().runTransaction(async transaction => {
+                        const inviteSnapshot = await transaction.get(inviteRef);
+                        if (!inviteSnapshot.exists) {
+                            throw 'Post does not exist!';
+                        }
+                        transaction.update(inviteRef,
+                            {
+                                [editCapacities[0].startAddress]:editCapacities[0].count,
+                                [editCapacities[1].startAddress]:editCapacities[1].count,
+                                [editCapacities[2].startAddress]:editCapacities[2].count,
+                                [editCapacities[3].startAddress]:editCapacities[3].count,
+                                [editCapacities[4].startAddress]:editCapacities[4].count,
+                                [editCapacities[5].startAddress]:editCapacities[5].count,
+                            }
+                        );
+                    }
+                );
             }
-
         };
+
         // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'capacities', capacities);
 
         function listenInvite() {
@@ -141,17 +156,21 @@ export const GameScreen = ({route, navigation}: Props) => {
                     error: (e: Error) => console.log('*****************', e),
                     next: (querySnapshot: any[]) => {
                         const batch = firestore().batch();
+                        const batchRefs: any[] = [];
                         querySnapshot?.forEach(documentSnapshot => {
                             const stepIdsLocal: any[] = [];
+                            console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'line 147 stepIdsLocal \n', documentSnapshot.ref.id, '\n', stepIdsLocal, '\n', stepIds);
                             if (stepIds.find((id) => (id === documentSnapshot.ref.id)) === undefined && stepIdsLocal.find((id) => (id === documentSnapshot.ref.id)) === undefined) {
-                                batch.update(documentSnapshot.ref, firestoreFields.READ, true);
+                                batchRefs.push(documentSnapshot.ref);
                                 const opponentStep = documentSnapshot.data();
                                 stepIdsLocal.push([documentSnapshot.ref.id]);
                                 stepIds.push([documentSnapshot.ref.id]);
                                 remoteOpponentCounter++;
-                                console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'line 158 remoteOpponentCounter', remoteOpponentCounter, Date());
                                 launch(opponentStep.route, opponentStep.end, false);
                             }
+                        });
+                        batchRefs.forEach(ref => {
+                            batch.update(ref, firestoreFields.READ, true);
                         });
                         return batch.commit();
                     },
@@ -175,11 +194,11 @@ export const GameScreen = ({route, navigation}: Props) => {
                         // opponent gave up
                         setModalVisible(true);
                     }
-                    const opponentCapacities = capacities.filter((item) => !item.myCapacity);
+                    const opponentCapacities = capacities?.filter((item) => !item.myCapacity);
                     console.log(queryInvite?.userRef.id === userRef.id ? queryInvite?.user.name : queryInvite?.author.name, 'line 179 Capacities', capacities, Date());
                     console.log(queryInvite?.userRef.id === userRef.id ? queryInvite?.user.name : queryInvite?.author.name, 'line 179 opponentCapacities', opponentCapacities, Date());
-                    opponentCapacities.forEach((item) => {
-                        console.log(queryInvite?.userRef.id === userRef.id ? queryInvite?.user.name : queryInvite?.author.name,item.startAddress, item.count , queryInvite[item.startAddress]);
+                    opponentCapacities?.forEach((item) => {
+                        console.log(queryInvite?.userRef.id === userRef.id ? queryInvite?.user.name : queryInvite?.author.name, item.startAddress, item.count, queryInvite[item.startAddress]);
                         if (item.count !== queryInvite[item.startAddress]) {
                             item.count = queryInvite[item.startAddress];
                         }
@@ -195,12 +214,12 @@ export const GameScreen = ({route, navigation}: Props) => {
                 inviteSubscriber();
             };
         }
+
         // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'line 196 Capacities', capacities, Date());
 
         useEffect(() => {
             remoteOpponentCounter = 0;
             handleMyLaunchCounter = 0;
-            refillCapacities();
             listenInvite();
             setReadyForHisLaunch(true);
             const backAction = () => {
@@ -276,7 +295,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         useInterval(() => {
             setStep(step + 1);
             if (step > 0 && (step * pointMovingInterval / 1000) % timerRefillCapacity === 0) {
-                refillCapacities();
+                reloadMyCapacities();
             }
         }, pointMovingInterval);
 
@@ -287,7 +306,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                 }
                 let gameOver = false;
                 launches.map((launch) => {
-                    let capacity = capacities.find((item) => item.startAddress === launch.currentAddress);
+                    let capacity = capacities?.find((item) => item.startAddress === launch.currentAddress);
                     if (capacity?.live) {
                         gameOver = true;
                         capacity.live = false;
@@ -319,7 +338,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                     }
                 });
                 if (gameOver) {
-                    const value = capacities.find((item) => !item.live);
+                    const value = capacities?.find((item) => !item.live);
                     setGameResult(!value?.myCapacity);
                     const inviteField = value?.myCapacity ? firestoreFields.LOSER_REF : firestoreFields.WINNER_REF;
                     if (value?.myCapacity) {
@@ -332,7 +351,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         );
 
         useEffect(() => {
-                if (inviteRef === undefined) {
+                if (inviteRef === undefined && capacities) {
                     if (capacities.find((item) => !item.live) === undefined) {
                         const availableCapacities = capacities.filter((item) => item.count > 0 && item.live && !item.myCapacity);
                         if (availableCapacities.length > 0) {
@@ -365,7 +384,7 @@ export const GameScreen = ({route, navigation}: Props) => {
             setStep(0);
             setReadyForMyLaunch(false);
             setGameResult(undefined);
-            refillCapacities();
+            reloadMyCapacities();
             setCurrentRoute(undefined);
             setStartAddress(undefined);
             setEndAddress(undefined);
@@ -403,23 +422,14 @@ export const GameScreen = ({route, navigation}: Props) => {
                 } else {
                     launch(launchRoute, end, true);
                 }
-                // inviteRef.collection(firestoreCollections.STEPS).add(
-                //     {
-                //         [firestoreFields.PLAYER_REF]: userRef,
-                //         [firestoreFields.READ]: false,
-                //         date: Date(),
-                //         route: launchRoute,
-                //         end: end,
-                //
-                //     }).then(() => launch(launchRoute, end, true));
             }
         ;
 
         const launch = (launchRoute: Route | undefined, end: string | undefined, myLaunch: boolean) => {
-            // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, launchRoute, end);
+            console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, launchRoute, end);
             if (launchRoute?.startAddress !== undefined && end !== undefined && launchRoute?.points !== undefined) {
                 const endIndex = launchRoute?.points.indexOf(end);
-                if (endIndex !== undefined) {
+                if (endIndex !== undefined && capacities) {
                     const currentCapacity = capacities.find((item) => item.startAddress === launchRoute.startAddress);
                     if (currentCapacity !== undefined) {
                         currentCapacity.count = currentCapacity.count - 1;
@@ -623,7 +633,7 @@ export const GameScreen = ({route, navigation}: Props) => {
 
         const renderPoint = (address: string, isStartAddress: boolean, color: ColorValue, showCounter: boolean) => {
             const cellSizeWithPadding = (isStartAddress ? cellSize : cellSize / 2) * 0.5;
-            const capacity = capacities.find((item) => item.startAddress === address);
+            const capacity = capacities?.find((item) => item.startAddress === address);
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
                 <View
                     style={{
@@ -650,7 +660,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         };
 
         const renderSwordman = (address: string) => {
-            const capacity = capacities.find((item) => item.startAddress === address);
+            const capacity = capacities?.find((item) => item.startAddress === address);
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
                 <Swordman
                     fill={invite === undefined || invite.authorRef.id === userRef.id ? baseColor.blue : baseColor.red}/>
