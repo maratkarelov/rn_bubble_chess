@@ -29,7 +29,7 @@ export default function ActionButton(
     };
     return (
         <TouchableOpacity
-            style={[Styles.button, {backgroundColor: props.disable ? disableColor(props.backgroundColor ?? baseColor.sky) : props.backgroundColor ?? baseColor.sky}]}
+            style={[Styles.button, {backgroundColor: props.disable ? disableColor(props.backgroundColor ?? baseColor.blue) : props.backgroundColor ?? baseColor.blue}]}
             onPress={onPress}
             disabled={props.disable || props.isLoading}>
             {renderContent()}

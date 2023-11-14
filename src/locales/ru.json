@@ -29,8 +29,8 @@
     "exit_game": "Выйти из игры?",
     "opponent_gave_up": "Соперник сдался",
     "label": "game",
-    "reply": "reply",
-    "go": "go",
+    "reply": "Повтор",
+    "launch": "Пуск",
     "reload": "Пополнение через: ",
     "game_over_win": "Вы выиграли",
     "game_over_lose": "Вы проиграли"

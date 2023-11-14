@@ -94,7 +94,7 @@ export default StyleSheet.create({
         elevation: 5,
     },
     button: {
-        marginTop:16,
+        marginTop:30,
         borderRadius: 20,
         padding: 10,
         elevation: 2,

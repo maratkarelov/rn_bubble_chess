@@ -28,7 +28,7 @@ export const MainScreen = ({navigation}: Props) => {
                             tabBarIcon: ({color, size}) => (
                                 <MaterialCommunityIcons name="play-circle" color={color} size={size}/>
                             ),
-                            tabBarBadge: 3,
+                            // tabBarBadge: 3,
                         }}/>
             <Tab.Screen name="NotepadScreen"
                         component={NotepadScreen}

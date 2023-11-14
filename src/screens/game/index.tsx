@@ -91,7 +91,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         const efficientHeight = Platform.OS === 'ios' ? 0.85 : 0.9;
         const efficientWidth = Platform.OS === 'ios' ? 0.8 : 0.85;
         const capacityCount = 6;
-        const timerRefillCapacity = 300;
+        const timerRefillCapacity = 3000;
         const ratio = height * efficientHeight / width;
         if (ratio > 2) {
             boardWidth = width;
@@ -103,6 +103,7 @@ export const GameScreen = ({route, navigation}: Props) => {
             }
         }
         const cellSize = boardWidth / 6;
+        // console.log(invite)
 
         const refillCapacities = () => {
             const iAmAuthor = invite === undefined || invite?.authorRef.id === userRef.id;
@@ -122,14 +123,15 @@ export const GameScreen = ({route, navigation}: Props) => {
                     {startAddress: 'f12', count: capacityCount, live: true, myCapacity: !iAmAuthor}];
                 setCapacities(newCapacities);
             } else {
-                capacities.forEach((item) => {
+                const editCapacities = inviteRef === undefined ? capacities : capacities.filter((item) => item.myCapacity !== iAmAuthor);
+                editCapacities.forEach((item) => {
                     item.count = item.count + capacityCount;
                 });
-                setReadyForHisLaunch(!readyForHisLaunch)
+                setReadyForHisLaunch(!readyForHisLaunch);
             }
-            // console.log(Platform.OS, 'newCapacities', newCapacities);
 
         };
+        // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'capacities', capacities);
 
         function listenInvite() {
             const opponentStepsSubscriber = inviteRef?.collection(firestoreCollections.STEPS)
@@ -163,31 +165,37 @@ export const GameScreen = ({route, navigation}: Props) => {
                         setWaitingOpponentReadMyStep(querySnapshot.length > 0);
                     },
                 });
-            // let opponentStepsSubscriber = inviteRef
-            //     .onSnapshot({
-            //         error: (e: Error) => console.log('*****************', e),
-            //         next: (querySnapshot: any[]) => {
-            //             const queryInvite = querySnapshot.data();
-            //             setInvite(queryInvite);
-            //             if (queryInvite?.loserRef && queryInvite?.loserRef?.id !== userRef.id) {
-            //                 // opponent gave up
-            //                 setModalVisible(true);
-            //             }
-            //             const userField = queryInvite?.userRef.id === userRef.id ? firestoreFields.STEP_AUTHOR : firestoreFields.STEP_USER;
-            //             const opponentStep = queryInvite[userField];
-            //             if (opponentStep) {
-            //                 remoteOpponentCounter++;
-            //                 console.log(invite?.userRef.id === userRef.id ? invite?.author.name : invite?.user.name, 'line 158 remoteOpponentCounter', remoteOpponentCounter, Date());
-            //                 launch(opponentStep.route, opponentStep.start, opponentStep.end, false);
-            //                 inviteRef.update(userField, null);
-            //             }
-            //         },
-            //     });
+            let inviteSubscriber = inviteRef?.onSnapshot({
+                error: (e: Error) => console.log('*****************', e),
+                next: (querySnapshot: any[]) => {
+                    const queryInvite = querySnapshot.data();
+                    console.log(queryInvite?.userRef.id === userRef.id ? queryInvite?.user.name : queryInvite?.author.name, 'line 179 queryInvite', queryInvite, Date());
+                    setInvite(queryInvite);
+                    if (queryInvite?.loserRef && queryInvite.winnerRef === undefined && queryInvite?.loserRef?.id !== userRef.id) {
+                        // opponent gave up
+                        setModalVisible(true);
+                    }
+                    const opponentCapacities = capacities.filter((item) => !item.myCapacity);
+                    console.log(queryInvite?.userRef.id === userRef.id ? queryInvite?.user.name : queryInvite?.author.name, 'line 179 Capacities', capacities, Date());
+                    console.log(queryInvite?.userRef.id === userRef.id ? queryInvite?.user.name : queryInvite?.author.name, 'line 179 opponentCapacities', opponentCapacities, Date());
+                    opponentCapacities.forEach((item) => {
+                        console.log(queryInvite?.userRef.id === userRef.id ? queryInvite?.user.name : queryInvite?.author.name,item.startAddress, item.count , queryInvite[item.startAddress]);
+                        if (item.count !== queryInvite[item.startAddress]) {
+                            item.count = queryInvite[item.startAddress];
+                        }
+                    });
+                    // if (capacities.length === 12) {
+                    //     setCapacities(capacities);
+                    // }
+                },
+            });
             return () => {
                 opponentStepsSubscriber();
                 myStepsSubscriber();
+                inviteSubscriber();
             };
         }
+        // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'line 196 Capacities', capacities, Date());
 
         useEffect(() => {
             remoteOpponentCounter = 0;
@@ -324,27 +332,29 @@ export const GameScreen = ({route, navigation}: Props) => {
         );
 
         useEffect(() => {
-                if (capacities.find((item) => !item.live) === undefined) {
-                    const availableCapacities = capacities.filter((item) => item.count > 0 && item.live && !item.myCapacity);
-                    if (availableCapacities.length > 0) {
-                        const max = 0;
-                        const min = 10;
-                        const secondsToPlay = Math.floor(Math.random() * (max - min + 1) + min);
-                        const timeout = setTimeout(() => {
-                            const rCapacityIndex = Math.floor(Math.random() * availableCapacities.length);
-                            const capacity = availableCapacities[rCapacityIndex];
-                            const liveFillRoutes = userRoutes.filter((item) => item.startAddress === capacity.startAddress);
-                            const rRouteIndex = Math.floor(Math.random() * liveFillRoutes.length);
-                            const route = liveFillRoutes[rRouteIndex];
-                            if (route?.points !== undefined) {
-                                const rEndIndex = Math.floor(Math.random() * route.points.length);
-                                const end = route.points[rEndIndex];
-                                launch(route, end, false);
-                            }
-                            setReadyForHisLaunch(true);
-                        }, secondsToPlay * 1000);
-                        setReadyForHisLaunch(false);
-                        return () => clearTimeout(timeout);
+                if (inviteRef === undefined) {
+                    if (capacities.find((item) => !item.live) === undefined) {
+                        const availableCapacities = capacities.filter((item) => item.count > 0 && item.live && !item.myCapacity);
+                        if (availableCapacities.length > 0) {
+                            const max = 0;
+                            const min = 10;
+                            const secondsToPlay = Math.floor(Math.random() * (max - min + 1) + min);
+                            const timeout = setTimeout(() => {
+                                const rCapacityIndex = Math.floor(Math.random() * availableCapacities.length);
+                                const capacity = availableCapacities[rCapacityIndex];
+                                const liveFillRoutes = userRoutes.filter((item) => item.startAddress === capacity.startAddress);
+                                const rRouteIndex = Math.floor(Math.random() * liveFillRoutes.length);
+                                const route = liveFillRoutes[rRouteIndex];
+                                if (route?.points !== undefined) {
+                                    const rEndIndex = Math.floor(Math.random() * route.points.length);
+                                    const end = route.points[rEndIndex];
+                                    launch(route, end, false);
+                                }
+                                setReadyForHisLaunch(true);
+                            }, secondsToPlay * 1000);
+                            setReadyForHisLaunch(false);
+                            return () => clearTimeout(timeout);
+                        }
                     }
                 }
             }, [readyForHisLaunch]
@@ -494,7 +504,13 @@ export const GameScreen = ({route, navigation}: Props) => {
             navigation.setOptions({
                 headerShown: true,
                 headerBackTitle: '',
-                headerTitle: (invite ? invite?.userRef.id === userRef.id ? invite?.author.name : invite?.user.name : "") + I18n.t('game.reload') + (timerRefillCapacity - (step * pointMovingInterval / 1000) % timerRefillCapacity).toFixed(0),
+                headerTitle: () => {
+                    return (
+                        <Text
+                            numberOfLines={2}>{(invite ? invite?.userRef.id === userRef.id ? invite?.author.name + '\n' : invite?.user.name + '\n' : '') + I18n.t('game.reload') + (timerRefillCapacity - (step * pointMovingInterval / 1000) % timerRefillCapacity).toFixed(0)}</Text>
+                    );
+                },
+                // headerTitle: (invite ? invite?.userRef.id === userRef.id ? invite?.author.name+' ' : invite?.user.name+' ' : "") + I18n.t('game.reload') + (timerRefillCapacity - (step * pointMovingInterval / 1000) % timerRefillCapacity).toFixed(0),
                 headerLeft: () => (
                     <TouchableOpacity style={Styles.back}
                                       onPress={() => setModalVisible(true)}>
@@ -506,7 +522,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                         isLoading={waitingOpponentReadMyStep}
                         disable={waitingOpponentReadMyStep}
                         onPress={() => gameResult !== undefined ? newGame() : handleMyLaunch(currentRoute, endAddress)}
-                        title={I18n.t(gameResult !== undefined ? 'game.reply' : 'game.go')}
+                        title={I18n.t(gameResult !== undefined ? 'game.reply' : 'game.launch')}
                     />
                 ),
             });
@@ -541,7 +557,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                 <View style={Styles.centeredView}>
                     <View style={Styles.modalView}>
                         <Text
-                            style={Styles.modalText}>{I18n.t(invite?.loserRef ? 'game.opponent_gave_up' : 'game.exit_game')}</Text>
+                            style={Styles.modalText}>{I18n.t(invite?.loserRef ? invite.loserRef.id === userRef.id ? 'game.game_over_lose' : 'game.opponent_gave_up' : 'game.exit_game')}</Text>
                         <Pressable
                             style={[Styles.button, Styles.buttonOpen]}
                             onPress={() => exitGame()}>
@@ -626,7 +642,7 @@ export const GameScreen = ({route, navigation}: Props) => {
             </View>;
 
         };
-// console.log(Platform.OS, capacities)
+        // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, capacities)
         const renderAvailableTower = () => {
             return <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
                 <Tower fill={invite === undefined || invite.authorRef.id === userRef.id ? baseColor.blue : baseColor.red}/>
