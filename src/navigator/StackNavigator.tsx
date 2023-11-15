@@ -7,6 +7,7 @@ import I18n from "../locales/i18n";
 import {GameScreen} from "../screens/game";
 import {AuthScreen} from "../screens/auth";
 import RegistrationScreen from "../screens/auth/registration";
+import {baseColor} from "../theme/appTheme";
 
 export type RootStackParams = {
     StartScreen: undefined;
@@ -28,12 +29,11 @@ export const StackNavigator = () => {
             screenOptions={{
                 headerTintColor: 'black',
                 headerStyle: {
-                    backgroundColor: '#f7ede2',
+                    backgroundColor: baseColor.white,
                     elevation: 0,
-                    shadowColor: 'transparent',
                 },
                 cardStyle: {
-                    backgroundColor: '#f7ede2',
+                    backgroundColor: baseColor.transparent,
                 },
             }}>
             <Stack.Screen

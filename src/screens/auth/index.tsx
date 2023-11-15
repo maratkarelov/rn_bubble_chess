@@ -86,7 +86,7 @@ export const AuthScreen = ({navigation}: Props) => {
                         autoCapitalize="none"
                         defaultValue={formik.values.email}
                         onChangeText={formik.handleChange('email')}
-
+                        onSubmitEditing={() => Keyboard.dismiss()}
                     />
                     <Text>{formik.errors.email ?? " "}</Text>
                     <TextInput
@@ -96,6 +96,7 @@ export const AuthScreen = ({navigation}: Props) => {
                         autoCapitalize="none"
                         defaultValue={formik.values.password}
                         onChangeText={formik.handleChange('password')}
+                        onSubmitEditing={() => Keyboard.dismiss()}
                     />
                     <View style={Styles.login}>
                         <ActionButton

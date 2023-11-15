@@ -7,6 +7,7 @@ import {firebase} from '@react-native-firebase/auth';
 import PushNotification, {Importance} from 'react-native-push-notification';
 import {StackNavigator} from './src/navigator/StackNavigator';
 import {PermissionsAndroid, Platform} from 'react-native';
+import {ToastProvider} from "react-native-toast-notifications";
 // import {
 //     FIREBASE_API_KEY_ANDROID,
 //     FIREBASE_API_KEY_IOS,
@@ -88,9 +89,11 @@ const App = () => {
     });
 
     return (
+        <ToastProvider>
             <NavigationContainer>
                 <StackNavigator/>
             </NavigationContainer>
+        </ToastProvider>
     );
 };
 

@@ -1,12 +1,14 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useState} from 'react';
-import {FlatList, Modal, Pressable, Text, TouchableOpacity, View} from 'react-native';
+import {BackHandler, FlatList, Modal, Pressable, Text, TouchableOpacity, View} from 'react-native';
 import Styles from '../home/styles';
 import I18n from '../../locales/i18n';
 import firestore, {FirebaseFirestoreTypes} from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {baseColor} from '../../theme/appTheme';
 import {firestoreCollections, firestoreFields} from '../../constants/firestore';
+import RNExitApp from 'react-native-exit-app';
+import {useToast} from 'react-native-toast-notifications';
 
 interface Props extends StackScreenProps<any, any> {
 }
@@ -26,6 +28,8 @@ export const HomeScreen = ({navigation}: Props) => {
     const [user, setUser] = useState<any | undefined>(undefined);
     const uid = auth().currentUser?.uid;
     const userRef = firestore().collection(firestoreCollections.USERS).doc(uid);
+    const toast = useToast();
+    var backCounter = 0;
 
     async function readDbUser() {
         const userDocumentSnapshot = await userRef.get();
@@ -71,7 +75,22 @@ export const HomeScreen = ({navigation}: Props) => {
 
     useEffect(() => {
         readDbUser().then(() => {
-        });
+            userRef.update(firestoreFields.I_AM_READY, true)
+            });
+        const backAction = () => {
+            if (backCounter === 1){
+                RNExitApp.exitApp();
+            } else {
+                toast.show(I18n.t('home.exit'));
+                backCounter++;
+            }
+            return true;
+        };
+
+        const backHandler = BackHandler.addEventListener(
+            'hardwareBackPress',
+            backAction,
+        );
 
         const meInvitedSubscriber = firestore()
             .collection(firestoreCollections.INVITES)
@@ -106,6 +125,7 @@ export const HomeScreen = ({navigation}: Props) => {
         return () => {
             meInvitedSubscriber();
             iInvitedSubscriber();
+            backHandler.remove();
         };
     }, []);
 
@@ -141,14 +161,14 @@ export const HomeScreen = ({navigation}: Props) => {
     ;
 
     const renderItem = ({item: {key, data}}: any) => {
-        let backgroundColor = baseColor.gray_30;
+        let backgroundColor = baseColor.gray_10;
         if ((data?.authorRef?.id === userRef.id && data?.waitingUser === 1) || (data?.userRef?.id === userRef.id && data?.waitingAuthor === 1)) {
             backgroundColor = baseColor.pink_50;
         }
         return (
             <TouchableOpacity style={[Styles.invite_item, {backgroundColor: backgroundColor}]}
                               onPress={() => handleItemClick({key, data})}>
-                <Text>{data?.name}{data?.authorRef?.id === userRef.id ? data?.user?.name : data?.author?.name}</Text>
+                <Text style={Styles.invite_item_text}>{data?.name}{data?.authorRef?.id === userRef.id ? data?.user?.name : data?.author?.name}</Text>
             </TouchableOpacity>);
 
     };

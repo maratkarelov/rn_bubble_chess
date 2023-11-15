@@ -104,7 +104,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         let {boardWidth, boardHeight} = {boardWidth: 0, boardHeight: 0};
         const efficientHeight = Platform.OS === 'ios' ? 0.85 : 0.9;
         const efficientWidth = Platform.OS === 'ios' ? 0.8 : 0.85;
-        const timerRefillCapacity = 300;
+        const timerRefillCapacity = 200;
         const ratio = height * efficientHeight / width;
         if (ratio > 2) {
             boardWidth = width;
@@ -133,12 +133,12 @@ export const GameScreen = ({route, navigation}: Props) => {
                         }
                         transaction.update(inviteRef,
                             {
-                                [editCapacities[0].startAddress]:editCapacities[0].count,
-                                [editCapacities[1].startAddress]:editCapacities[1].count,
-                                [editCapacities[2].startAddress]:editCapacities[2].count,
-                                [editCapacities[3].startAddress]:editCapacities[3].count,
-                                [editCapacities[4].startAddress]:editCapacities[4].count,
-                                [editCapacities[5].startAddress]:editCapacities[5].count,
+                                [editCapacities[0].startAddress]: editCapacities[0].count,
+                                [editCapacities[1].startAddress]: editCapacities[1].count,
+                                [editCapacities[2].startAddress]: editCapacities[2].count,
+                                [editCapacities[3].startAddress]: editCapacities[3].count,
+                                [editCapacities[4].startAddress]: editCapacities[4].count,
+                                [editCapacities[5].startAddress]: editCapacities[5].count,
                             }
                         );
                     }
@@ -383,8 +383,21 @@ export const GameScreen = ({route, navigation}: Props) => {
             setCapacities([]);
             setStep(0);
             setReadyForMyLaunch(false);
+            setReadyForHisLaunch(true);
             setGameResult(undefined);
-            reloadMyCapacities();
+            setCapacities([
+                {startAddress: 'a1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'b1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'c1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'd1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'e1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'f1', count: capacityCount, live: true, myCapacity: iAmAuthor},
+                {startAddress: 'a12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'b12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'c12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'd12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'e12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
+                {startAddress: 'f12', count: capacityCount, live: true, myCapacity: !iAmAuthor}]);
             setCurrentRoute(undefined);
             setStartAddress(undefined);
             setEndAddress(undefined);
@@ -467,11 +480,14 @@ export const GameScreen = ({route, navigation}: Props) => {
                     setStartAddress(undefined);
                     setAvailableRoutes([]);
                 } else {
-                    const newAvailableRoutes = routes.filter((item) => {
-                        return item.startAddress === selectedAddress;
-                    });
-                    setStartAddress(selectedAddress);
-                    setAvailableRoutes(newAvailableRoutes);
+                    const selectedCapacity = capacities.find((item) => item.startAddress === selectedAddress);
+                    if (selectedCapacity !== undefined && selectedCapacity.count > 0) {
+                        const newAvailableRoutes = routes.filter((item) => {
+                            return item.startAddress === selectedAddress;
+                        });
+                        setStartAddress(selectedAddress);
+                        setAvailableRoutes(newAvailableRoutes);
+                    }
                 }
                 setEndAddress(undefined);
                 setReadyForMyLaunch(false);
@@ -520,7 +536,6 @@ export const GameScreen = ({route, navigation}: Props) => {
                             numberOfLines={2}>{(invite ? invite?.userRef.id === userRef.id ? invite?.author.name + '\n' : invite?.user.name + '\n' : '') + I18n.t('game.reload') + (timerRefillCapacity - (step * pointMovingInterval / 1000) % timerRefillCapacity).toFixed(0)}</Text>
                     );
                 },
-                // headerTitle: (invite ? invite?.userRef.id === userRef.id ? invite?.author.name+' ' : invite?.user.name+' ' : "") + I18n.t('game.reload') + (timerRefillCapacity - (step * pointMovingInterval / 1000) % timerRefillCapacity).toFixed(0),
                 headerLeft: () => (
                     <TouchableOpacity style={Styles.back}
                                       onPress={() => setModalVisible(true)}>

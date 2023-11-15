@@ -17,12 +17,15 @@
     "online": "В сети",
     "i_invite": "Исходящие",
     "me_invited": "Входящие",
-    "new_game": "Новая игра"
+    "new_game": "Новая игра",
+    "exit": "Для выхода нажмите еще раз"
   },
   "notepad": {
-    "label": "notepad"
+    "label": "Блокнот"
   },
   "game": {
+    "training_game": "Тренировка",
+    "online_game": "Игра по сети",
     "invite": "Пригласить",
     "accept": "Принять приглашение",
     "waiting": "Ожидаю игрока",
@@ -36,8 +39,8 @@
     "game_over_lose": "Вы проиграли"
   },
   "profile": {
-    "label": "Профіль",
-    "settings": "Settings",
-    "sign_out": "sign out"
+    "label": "Профиль",
+    "settings": "Настройки",
+    "sign_out": "Выход"
   }
 }

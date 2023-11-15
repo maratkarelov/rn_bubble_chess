@@ -34,12 +34,16 @@ export default StyleSheet.create({
         top: 20,
 
     },
-    invite_item:{
-    height: 50,
+    invite_item: {
+        borderRadius: 8,
+        height: 50,
         margin: 8,
         alignItems: 'center',
         justifyContent: 'center'
-},
+    },
+    invite_item_text: {
+        fontFamily: 'copperplate',
+    },
     online: {
         fontSize: 18,
         textAlign: 'center',
@@ -72,7 +76,7 @@ export default StyleSheet.create({
         color: baseColor.sky,
     },
     centeredView: {
-        backgroundColor:baseColor.gray_30,
+        backgroundColor: baseColor.gray_30,
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
@@ -94,7 +98,7 @@ export default StyleSheet.create({
         elevation: 5,
     },
     button: {
-        marginTop:30,
+        marginTop: 30,
         borderRadius: 20,
         padding: 10,
         elevation: 2,
@@ -107,7 +111,7 @@ export default StyleSheet.create({
     },
     textStyle: {
         color: 'white',
-        width:100,
+        width: 100,
         fontWeight: 'bold',
         textAlign: 'center',
     },

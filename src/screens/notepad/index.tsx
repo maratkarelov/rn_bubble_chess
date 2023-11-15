@@ -15,8 +15,14 @@ export const NotepadScreen = ({navigation}: Props) => {
 
     useEffect(() => {
         navigation.setOptions({
-            headerShown: false,
-            headerBackTitle: ''
+            headerShown: true,
+            headerBackTitle: '',
+            headerTitle: () => {
+                return (
+                    <Text></Text>
+                );
+            },
+
         });
     }, []);
 

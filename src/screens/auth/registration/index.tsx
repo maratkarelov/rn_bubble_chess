@@ -1,4 +1,4 @@
-import {KeyboardAvoidingView, Modal, Platform, Pressable, Text, TextInput, View} from 'react-native';
+import {Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, Text, TextInput, View} from 'react-native';
 import Styles from '../styles';
 import I18n from '../../../locales/i18n';
 import ActionButton from '../../../components/ActionButton';
@@ -89,7 +89,7 @@ const RegistrationScreen = ({navigation}: Props) => {
                         inputMode="text"
                         defaultValue={formik.values.name}
                         onChangeText={formik.handleChange('name')}
-
+                        onSubmitEditing={() => Keyboard.dismiss()}
                     />
                     <Text>{formik.errors.name ?? ' '}</Text>
                     <TextInput
@@ -99,6 +99,7 @@ const RegistrationScreen = ({navigation}: Props) => {
                         autoCapitalize="none"
                         defaultValue={formik.values.email}
                         onChangeText={formik.handleChange('email')}
+                        onSubmitEditing={() => Keyboard.dismiss()}
 
                     />
                     <Text>{formik.errors.email ?? ' '}</Text>
@@ -109,6 +110,7 @@ const RegistrationScreen = ({navigation}: Props) => {
                         autoCapitalize="none"
                         defaultValue={formik.values.password}
                         onChangeText={formik.handleChange('password')}
+                        onSubmitEditing={() => Keyboard.dismiss()}
                     />
                     <Text>{formik.errors.password ?? ' '}</Text>
                     <View style={Styles.login}>

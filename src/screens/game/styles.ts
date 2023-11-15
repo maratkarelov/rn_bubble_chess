@@ -3,21 +3,21 @@ import {baseColor} from '../../theme/appTheme';
 
 export default StyleSheet.create({
 
-    container:{
-        flex:1,
-        alignItems:'center'
+    container: {
+        flex: 1,
+        alignItems: 'center',
     },
-    back:{
-        padding:16,
+    back: {
+        padding: 16,
     },
-    whiteSquare:{
-        backgroundColor:baseColor.white,
-    } ,
-    blackSquare:{
-        backgroundColor:baseColor.black,
+    whiteSquare: {
+        backgroundColor: baseColor.white,
+    },
+    blackSquare: {
+        backgroundColor: baseColor.black,
     },
     centeredView: {
-        backgroundColor:baseColor.gray_30,
+        backgroundColor: baseColor.gray_30,
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
@@ -39,7 +39,7 @@ export default StyleSheet.create({
         elevation: 5,
     },
     button: {
-        marginTop:30,
+        marginTop: 30,
         borderRadius: 20,
         padding: 10,
         elevation: 2,
@@ -52,7 +52,7 @@ export default StyleSheet.create({
     },
     textStyle: {
         color: 'white',
-        width:100,
+        width: 100,
         fontWeight: 'bold',
         textAlign: 'center',
     },
@@ -60,7 +60,7 @@ export default StyleSheet.create({
         marginBottom: 15,
         textAlign: 'center',
     },
-    counterText:{
+    counterText: {
         position: 'absolute',
         bottom: 0,
         right: 0,

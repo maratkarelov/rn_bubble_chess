@@ -24,13 +24,13 @@ export default StyleSheet.create({
     },
 
     input: {
+        placeholderTextColor:baseColor.gray,
         fontSize: 16,
         fontFamily:'copperplate',
         paddingVertical: 15,
         paddingHorizontal: 15,
         width: '100%',
         height: 60,
-        backgroundColor: '#fff',
         borderRadius: 10,
         borderColor: '#b9a7a7',
         marginTop: 20,
