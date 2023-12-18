@@ -4,9 +4,9 @@ export default StyleSheet.create({
     button: {
         marginEnd: 16,
         alignItems: 'center',
+        height:50,
         justifyContent: 'center',
         borderRadius: 8,
-        elevation: 8
     },
     text: {
         paddingVertical: 4,

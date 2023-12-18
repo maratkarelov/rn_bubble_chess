@@ -35,11 +35,6 @@ export default StyleSheet.create({
         borderColor: '#b9a7a7',
         marginTop: 20,
         borderWidth: 1,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 7},
-        shadowOpacity: 0.11,
-        shadowRadius: 3,
-        elevation: 1,
     },
 
     login: {

@@ -15,7 +15,7 @@ import Styles from '../game/styles';
 import {baseColor} from '../../theme/appTheme';
 import {IconBack, IconFire, Swordman, Tower} from '../../svg';
 import ActionButton from '../../components/ActionButton';
-import {authorRoutes, userRoutes} from '../game/gameCollections';
+import {authorRoutes} from '../game/gameCollections';
 import I18n from '../../locales/i18n';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -60,10 +60,11 @@ export const GameScreen = ({route, navigation}: Props) => {
         const {initInvite, initInviteRef} = route.params;
         const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
         const capacityCount = 6;
-        const pointMovingInterval = 500;
-        const moveSteps = 20;
+        const pointMovingInterval = 200;
+        const moveSteps = 50;
         const launchCellRatio = 5;
         const explosionSteps = 5;
+        const AI_TIMER = 15
         const [inviteRef, setInviteRef] = useState(initInviteRef);
         const [invite, setInvite] = useState(initInvite);
         const [startAddress, setStartAddress] = useState<string | undefined>(undefined);
@@ -88,6 +89,89 @@ export const GameScreen = ({route, navigation}: Props) => {
             {startAddress: 'd12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
             {startAddress: 'e12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
             {startAddress: 'f12', count: capacityCount, live: true, myCapacity: !iAmAuthor}]);
+        let userRoutes = [
+            {
+                key: 'a12_f',
+                startAddress: 'a12',
+                points: ['a11', 'a10', 'a9', 'a8', 'a7', 'a6', 'a5', 'a4', 'a3', 'a2', 'a1'],
+            },
+            {
+                key: 'a12_r',
+                startAddress: 'a12',
+                points: ['b11', 'c10', 'd9', 'e8', 'f7', 'e6', 'd5', 'c4', 'b3', 'a2', 'b1'],
+            },
+            {
+                key: 'b12_l',
+                startAddress: 'b12',
+                points: ['a11', 'b10', 'c9', 'd8', 'e7', 'f6', 'e5', 'd4', 'c3', 'b2', 'a1'],
+            },
+            {
+                key: 'b12_f',
+                startAddress: 'b12',
+                points: ['b11', 'b10', 'b9', 'b8', 'b7', 'b6', 'b5', 'b4', 'b3', 'b2', 'b1'],
+            },
+            {
+                key: 'b12_r',
+                startAddress: 'b12',
+                points: ['c11', 'd10', 'e9', 'f8', 'e7', 'd6', 'c5', 'b4', 'a3', 'b2', 'c1'],
+            },
+            {
+                key: 'c12_f',
+                startAddress: 'c12',
+                points: ['c11', 'c10', 'c9', 'c8', 'c7', 'c6', 'c5', 'c4', 'c3', 'c2', 'c1'],
+            },
+            {
+                key: 'c12_l',
+                startAddress: 'c12',
+                points: ['b11', 'a10', 'b9', 'c8', 'd7', 'e6', 'f5', 'e4', 'd3', 'c2', 'b1'],
+            },
+            {
+                key: 'c12_r',
+                startAddress: 'c12',
+                points: ['d11', 'e10', 'f9', 'e8', 'd7', 'c6', 'b5', 'a4', 'b3', 'c2', 'd1'],
+            },
+            {
+                key: 'd12_f',
+                startAddress: 'd12',
+                points: ['d11', 'd10', 'd9', 'd8', 'd7', 'd6', 'd5', 'd4', 'd3', 'd2', 'd1'],
+            },
+            {
+                key: 'd12_l',
+                startAddress: 'd12',
+                points: ['c11', 'b10', 'a9', 'b8', 'c7', 'd6', 'e5', 'f4', 'e3', 'd2', 'c1'],
+            },
+            {
+                key: 'd12_r',
+                startAddress: 'd12',
+                points: ['e11', 'f10', 'e9', 'd8', 'c7', 'b6', 'a5', 'b4', 'c3', 'd2', 'e1'],
+            },
+            {
+                key: 'e12_f',
+                startAddress: 'e12',
+                points: ['e11', 'e10', 'e9', 'e8', 'e7', 'e6', 'e5', 'e4', 'e3', 'e2', 'e1'],
+            },
+            {
+                key: 'e12_l',
+                startAddress: 'e12',
+                points: ['d11', 'c10', 'b9', 'a8', 'b7', 'c6', 'd5', 'e4', 'f3', 'e2', 'd1'],
+            },
+            {
+                key: 'e12_r',
+                startAddress: 'e12',
+                points: ['f11', 'e10', 'd9', 'c8', 'b7', 'a6', 'b5', 'c4', 'd3', 'e2', 'f1'],
+            },
+            {
+                key: 'f12_f',
+                startAddress: 'f12',
+                points: ['f11', 'f10', 'f9', 'f8', 'f7', 'f6', 'f5', 'f4', 'f3', 'f2', 'f1'],
+            },
+            {
+                key: 'f12_l',
+                startAddress: 'f12',
+                points: ['e11', 'd10', 'c9', 'b8', 'a7', 'b6', 'c5', 'd4', 'e3', 'f2', 'e1'],
+            },
+        ];
+
         const [step, setStep] = useState(0);
         const [readyForMyLaunch, setReadyForMyLaunch] = useState(false);
         const [readyForHisLaunch, setReadyForHisLaunch] = useState(false);
@@ -104,7 +188,7 @@ export const GameScreen = ({route, navigation}: Props) => {
         let {boardWidth, boardHeight} = {boardWidth: 0, boardHeight: 0};
         const efficientHeight = Platform.OS === 'ios' ? 0.85 : 0.9;
         const efficientWidth = Platform.OS === 'ios' ? 0.8 : 0.85;
-        const timerRefillCapacity = 200;
+        const timerRefillCapacity = 150;
         const ratio = height * efficientHeight / width;
         if (ratio > 2) {
             boardWidth = width;
@@ -356,7 +440,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                         const availableCapacities = capacities.filter((item) => item.count > 0 && item.live && !item.myCapacity);
                         if (availableCapacities.length > 0) {
                             const max = 0;
-                            const min = 10;
+                            const min = AI_TIMER;
                             const secondsToPlay = Math.floor(Math.random() * (max - min + 1) + min);
                             const timeout = setTimeout(() => {
                                 const rCapacityIndex = Math.floor(Math.random() * availableCapacities.length);
@@ -365,8 +449,7 @@ export const GameScreen = ({route, navigation}: Props) => {
                                 const rRouteIndex = Math.floor(Math.random() * liveFillRoutes.length);
                                 const route = liveFillRoutes[rRouteIndex];
                                 if (route?.points !== undefined) {
-                                    const rEndIndex = Math.floor(Math.random() * route.points.length);
-                                    const end = route.points[rEndIndex];
+                                    const end = route.points[route.points.length - 1];
                                     launch(route, end, false);
                                 }
                                 setReadyForHisLaunch(true);
@@ -398,6 +481,89 @@ export const GameScreen = ({route, navigation}: Props) => {
                 {startAddress: 'd12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
                 {startAddress: 'e12', count: capacityCount, live: true, myCapacity: !iAmAuthor},
                 {startAddress: 'f12', count: capacityCount, live: true, myCapacity: !iAmAuthor}]);
+             userRoutes = [
+                {
+                    key: 'a12_f',
+                    startAddress: 'a12',
+                    points: ['a11', 'a10', 'a9', 'a8', 'a7', 'a6', 'a5', 'a4', 'a3', 'a2', 'a1'],
+                },
+                {
+                    key: 'a12_r',
+                    startAddress: 'a12',
+                    points: ['b11', 'c10', 'd9', 'e8', 'f7', 'e6', 'd5', 'c4', 'b3', 'a2', 'b1'],
+                },
+                {
+                    key: 'b12_l',
+                    startAddress: 'b12',
+                    points: ['a11', 'b10', 'c9', 'd8', 'e7', 'f6', 'e5', 'd4', 'c3', 'b2', 'a1'],
+                },
+                {
+                    key: 'b12_f',
+                    startAddress: 'b12',
+                    points: ['b11', 'b10', 'b9', 'b8', 'b7', 'b6', 'b5', 'b4', 'b3', 'b2', 'b1'],
+                },
+                {
+                    key: 'b12_r',
+                    startAddress: 'b12',
+                    points: ['c11', 'd10', 'e9', 'f8', 'e7', 'd6', 'c5', 'b4', 'a3', 'b2', 'c1'],
+                },
+                {
+                    key: 'c12_f',
+                    startAddress: 'c12',
+                    points: ['c11', 'c10', 'c9', 'c8', 'c7', 'c6', 'c5', 'c4', 'c3', 'c2', 'c1'],
+                },
+                {
+                    key: 'c12_l',
+                    startAddress: 'c12',
+                    points: ['b11', 'a10', 'b9', 'c8', 'd7', 'e6', 'f5', 'e4', 'd3', 'c2', 'b1'],
+                },
+                {
+                    key: 'c12_r',
+                    startAddress: 'c12',
+                    points: ['d11', 'e10', 'f9', 'e8', 'd7', 'c6', 'b5', 'a4', 'b3', 'c2', 'd1'],
+                },
+                {
+                    key: 'd12_f',
+                    startAddress: 'd12',
+                    points: ['d11', 'd10', 'd9', 'd8', 'd7', 'd6', 'd5', 'd4', 'd3', 'd2', 'd1'],
+                },
+                {
+                    key: 'd12_l',
+                    startAddress: 'd12',
+                    points: ['c11', 'b10', 'a9', 'b8', 'c7', 'd6', 'e5', 'f4', 'e3', 'd2', 'c1'],
+                },
+                {
+                    key: 'd12_r',
+                    startAddress: 'd12',
+                    points: ['e11', 'f10', 'e9', 'd8', 'c7', 'b6', 'a5', 'b4', 'c3', 'd2', 'e1'],
+                },
+                {
+                    key: 'e12_f',
+                    startAddress: 'e12',
+                    points: ['e11', 'e10', 'e9', 'e8', 'e7', 'e6', 'e5', 'e4', 'e3', 'e2', 'e1'],
+                },
+                {
+                    key: 'e12_l',
+                    startAddress: 'e12',
+                    points: ['d11', 'c10', 'b9', 'a8', 'b7', 'c6', 'd5', 'e4', 'f3', 'e2', 'd1'],
+                },
+                {
+                    key: 'e12_r',
+                    startAddress: 'e12',
+                    points: ['f11', 'e10', 'd9', 'c8', 'b7', 'a6', 'b5', 'c4', 'd3', 'e2', 'f1'],
+                },
+                {
+                    key: 'f12_f',
+                    startAddress: 'f12',
+                    points: ['f11', 'f10', 'f9', 'f8', 'f7', 'f6', 'f5', 'f4', 'f3', 'f2', 'f1'],
+                },
+                {
+                    key: 'f12_l',
+                    startAddress: 'f12',
+                    points: ['e11', 'd10', 'c9', 'b8', 'a7', 'b6', 'c5', 'd4', 'e3', 'f2', 'e1'],
+                },
+            ];
+
             setCurrentRoute(undefined);
             setStartAddress(undefined);
             setEndAddress(undefined);
@@ -407,7 +573,7 @@ export const GameScreen = ({route, navigation}: Props) => {
 
         const handleMyLaunch = (launchRoute: Route | undefined, end: string | undefined) => {
                 handleMyLaunchCounter++;
-                console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'line 343 handleMyLaunch', handleMyLaunchCounter, Date());
+                // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, 'line 343 handleMyLaunch', handleMyLaunchCounter, Date());
                 setReadyForMyLaunch(false);
                 if (inviteRef) {
                     const stepRef = inviteRef.collection(firestoreCollections.STEPS).doc();
@@ -434,12 +600,53 @@ export const GameScreen = ({route, navigation}: Props) => {
                     ).then(() => launch(launchRoute, end, true));
                 } else {
                     launch(launchRoute, end, true);
+                    //AI defence launch
+                    const launchRouteEnd = launchRoute?.points[launchRoute?.points.length - 1];
+                    const towardRouteDirection = launchRoute?.key.slice(-1) === 'f' ? 'f' : launchRoute?.key.slice(-1) === 'r' ? 'l' : 'r'
+                    console.log('towardRouteDirection', towardRouteDirection, launchRoute);
+                    const towardsRoute = userRoutes.find((item) => item.startAddress === launchRouteEnd && item.key.slice(-1) === towardRouteDirection);
+                    if (towardsRoute !== undefined) {
+                        const towardsRouteCapacity = capacities.find((item) => item.startAddress === towardsRoute?.startAddress && item.count > 0);
+                        if (towardsRouteCapacity !== undefined) {
+                            // const alternativeRouteStart = capacities.filter((item) => item.count > 0 && item.startAddress !== towardsRoute?.startAddress && !item.myCapacity).map((item) => item.startAddress);
+                            // const alternativeRoutesSlice = userRoutes.filter((item) => item.startAddress !== towardsRoute?.startAddress && alternativeRouteStart.find(() => item.startAddress) !== undefined);
+                            // const alternativeRoutesSliceNew = [...alternativeRoutesSlice];
+                            // alternativeRoutesSliceNew.forEach((item) => {
+                            //     const newPoints =  [...item.points]
+                            //     item.points = newPoints.slice(0, 5)
+                            // });
+                            // const alternativeRoutes = alternativeRoutesSliceNew.filter((item) => item.points.some((a) => launchRoute?.points.includes(a)));
+                            // const alternativeCapacity = capacities.find((item) => alternativeRoutes.find((route) => route.startAddress === item.startAddress) && item.count > towardsRouteCapacity.count);
+                            // console.log('towardsRouteCapacity', towardsRouteCapacity);
+                            // console.log('towardsRoute', towardsRoute);
+                            // console.log('alternativeRouteStart', alternativeRouteStart);
+                            // console.log('alternativeRoutesSlice', alternativeRoutesSlice);
+                            // console.log('alternativeRoutesSliceNew', alternativeRoutesSliceNew);
+                            // console.log('alternativeRoutes', alternativeRoutes);
+                            // console.log('alternativeCapacity', alternativeCapacity);
+                            //
+                            // if (alternativeCapacity) {
+                            //     const alternativeRoute = alternativeRoutes.find((route) => route.startAddress === alternativeCapacity.startAddress);
+                            //     if (alternativeRoute) {
+                            //         const endIndex = Math.floor(Math.random() * alternativeRoute.points.length);
+                            //         console.log('alternativeRoute', alternativeRoute, endIndex);
+                            //         launch(alternativeRoute, alternativeRoute.points[endIndex], false);
+                            //     }
+                            // } else {
+                            const secondsToPlay = Math.floor(Math.random() * 5)
+                            const timeout = setTimeout(() => {
+                                const endIndex = Math.floor(Math.random() * towardsRoute.points.length);
+                                launch(towardsRoute, towardsRoute.points[endIndex], false);
+                            }, secondsToPlay * 1000);
+                            return () => clearTimeout(timeout);                            // }
+                        }
+                    }
                 }
             }
         ;
 
         const launch = (launchRoute: Route | undefined, end: string | undefined, myLaunch: boolean) => {
-            console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, launchRoute, end);
+            // console.log(invite?.userRef.id === userRef.id ? invite?.user.name : invite?.author.name, launchRoute, end);
             if (launchRoute?.startAddress !== undefined && end !== undefined && launchRoute?.points !== undefined) {
                 const endIndex = launchRoute?.points.indexOf(end);
                 if (endIndex !== undefined && capacities) {
@@ -718,7 +925,7 @@ export const GameScreen = ({route, navigation}: Props) => {
             const addressInCurrentRoute = indexAddr >= 0;
             const isSelectedCell = (currentRoute !== undefined && endAddress !== undefined && addressInCurrentRoute && indexAddr <= indexEnd) || address === startAddress;
             const unselectedPointColor = color === baseColor.wood_25 ? baseColor.gray_30 : baseColor.gray_50;
-            const selectedPointColor = invite === undefined || invite?.authorRef.id === userRef.id ? baseColor.sky : baseColor.pink;
+            const selectedPointColor = invite === undefined || invite?.authorRef.id === userRef.id ? baseColor.blue : baseColor.red;
             const pointColor = isSelectedCell ? selectedPointColor : row === 11 && !isAvailableCell ? baseColor.sky_50 : row === 0 && !isAvailableCell ? baseColor.pink_50 : unselectedPointColor;
             return (<TouchableOpacity
                 style={{
