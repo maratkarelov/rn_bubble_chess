@@ -28,6 +28,9 @@ end
 target 'NavigationApp' do
   config = use_native_modules!
   pod 'Firebase', :modular_headers => true
+#   pod 'Firebase/CoreOnly', '~> 10.17.0'
+  pod 'Firebase/Auth', '~> 10.23.1'
+#   pod 'Firebase/CoreOnly', '~> 10.23.1'
   pod 'FirebaseCore', :modular_headers => true
   pod 'FirebaseCoreInternal', :modular_headers => true
   pod 'FirebaseCoreExtension', :modular_headers => true
@@ -60,6 +63,5 @@ target 'NavigationApp' do
       config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
-    __apply_Xcode_12_5_M1_post_install_workaround(installer)
   end
 end

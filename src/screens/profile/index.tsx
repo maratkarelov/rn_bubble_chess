@@ -36,6 +36,7 @@ export const ProfileScreen = ({navigation}: Props) => {
 
     async function readDbUser() {
         const userDocumentSnapshot = await firestore().collection(firestoreCollections.USERS).doc(userFb?.uid).get();
+        // @ts-ignore
         setName(userDocumentSnapshot.data()[firestoreFields.NAME])
 
     }
@@ -45,10 +46,10 @@ export const ProfileScreen = ({navigation}: Props) => {
         <View style={Styles.container}>
             <Text style={Styles.profile}>{userFb?.email}</Text>
             <Text  style={Styles.profile}>{name}</Text>
-            <TouchableOpacity
-                onPress={() => navigation.navigate('SettingsScreen')}>
-                <Text style={Styles.settings_text}> {I18n.t('profile.settings')}</Text>
-            </TouchableOpacity>
+            {/*<TouchableOpacity*/}
+            {/*    onPress={() => navigation.navigate('SettingsScreen')}>*/}
+            {/*    <Text style={Styles.settings_text}> {I18n.t('profile.settings')}</Text>*/}
+            {/*</TouchableOpacity>*/}
         </View>
     );
 };
